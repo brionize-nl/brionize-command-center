@@ -62,9 +62,11 @@ interne schijf: een 24/7 "Citizen Developer & AI Command Center".
 - Geen API-keys of tokens in de workflow-yml.
 
 ## Nog open / bekende risico's
-- Onzeker of een volledige LFS+BLFS+XFCE+devstack-compile binnen de 6u/14GB
-  van een enkele CI-job past — mitigatie hierboven (fase-chaining + lokale
-  fallback), maar dit is pas bewezen na een eerste echte testrun.
+- Fase 1 (LFS-toolchain, hoofdstuk 5) is **bewezen** binnen GitHub Actions:
+  26m15s op een standaard `ubuntu-latest`-runner (zie PROGRESS.md,
+  run 35390915855) — ruim binnen de 6-uur-limiet. Voor fase 2-4 (basissysteem,
+  XFCE-desktop, devstack) is dit nog niet bewezen; die zijn zwaarder. Mitigatie
+  (fase-chaining + lokale fallback) staat, wordt per fase opnieuw getoetst.
 - Exacte pakketlijst/versies voor de BLFS-desktopstack nog niet in detail
   uitgewerkt.
 - Window-tiling-implementatie (devilspie2/wmctrl) voor de live app-tegels

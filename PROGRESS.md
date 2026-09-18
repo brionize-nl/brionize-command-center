@@ -57,3 +57,17 @@
   disk-cleanup-stap en een 350-minuten job-timeout (marge onder de harde
   6-uur-limiet). Logs en (bij succes) het `$LFS/tools`-archief worden als
   workflow-artifact geüpload (retentie 1 dag).
+- **Fase 1 geverifieerd in GitHub Actions — geslaagd.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35390915855
+  (getriggerd door de push), job `toolchain` groen in **26m15s**. Dat is
+  ruim binnen de 6-uur-limiet — het belangrijkste openstaande risico uit
+  BLUEPRINT.md ("past de compile wel binnen 6u/14GB?") is voor fase 1
+  beantwoord: ja, met grote marge. Artifacts geüpload:
+  `lfs-tools-phase1` (751MB, het gecompileerde `$LFS/tools`) en
+  `phase1-toolchain-logs` (612KB). Twee informationele annotaties (Node.js
+  20-deprecation in actions/checkout@v4 / upload-artifact@v4, en de
+  toekomstige ubuntu-latest→Ubuntu 26-migratie) — geen van beide
+  blokkerend, geen actie nodig.
+- **Volgende stap:** fase 2 (`02-base-system` — LFS hoofdstuk 6-9:
+  temporary tools in chroot, basissysteem, generieke kernel, GRUB) op
+  dezelfde manier uitwerken en via GitHub Actions valideren.
