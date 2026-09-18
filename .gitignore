@@ -1,0 +1,14 @@
+# Secrets — nooit committen
+.env
+*.env.local
+
+# Build-tijdelijke data (LFS/BLFS sources, chroot-mounts, output)
+build/
+sources/
+output/
+*.iso
+*.img
+
+# OS/editor ruis
+.DS_Store
+*.swp
