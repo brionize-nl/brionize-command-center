@@ -172,7 +172,21 @@
   naar de officiële URL — het generieke mechanisme lost dit nu vanzelf
   op, ook voor toekomstige, nog onbekende gevallen. Policy vastgelegd in
   BLUEPRINT.md ("Bronbeschikbaarheid & fallback-beleid").
-- **Volgende stap:** deze bundel (archiveer-fix + generiek
-  fetch-fallback-mechanisme) pushen, de fase-1+2-run herhalen via GitHub
-  Actions, en bevestigen dat hij nu volledig (inclusief archiveren) groen
-  is.
+- **Mijlpaal — fase 1+2 volledig groen, inclusief archiveren.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35401876921
+  — job `toolchain` succeeded in **1u4m50s** (ruim binnen de 6-uur-limiet).
+  Beide artifacts geüpload: `lfs-base-system-phase2` en `base-system-logs`.
+  Het `fetch_verified()`-mechanisme werkte in de praktijk exact zoals
+  bedoeld — uit de live build-log:
+  ```
+  ==> [ncurses-6.5-20250809.tgz] proberen via officiële URL...
+  ==> [ncurses-6.5-20250809.tgz] proberen via Wayback Machine...
+  ==> [ncurses-6.5-20250809.tgz] geverifieerd via Wayback Machine (md5 679987405412f970561cc85e1e6428a2 bevestigd)
+  ```
+  Geen onderbreking nodig, gewoon doorgebouwd. Hoofdstuk 5+6+7 zijn
+  hiermee volledig bewezen binnen GitHub Actions, met een generiek,
+  herbruikbaar fallback-mechanisme voor toekomstige dode bronnen.
+- **Volgende stap:** fase 3 (`03-blfs-desktop` — Xorg, XFCE, werkbladen,
+  Conky, window-tiling) uitwerken op dezelfde manier: commando's/versies
+  van de officiële bronnen, `fetch_verified()` hergebruiken, alleen via
+  GitHub Actions valideren.

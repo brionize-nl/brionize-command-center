@@ -87,11 +87,13 @@ telkens als losse onderbreking behandeld, maar is standaardgedrag van elke
 - Geen API-keys of tokens in de workflow-yml.
 
 ## Nog open / bekende risico's
-- Fase 1 (LFS-toolchain, hoofdstuk 5) is **bewezen** binnen GitHub Actions:
-  26m15s op een standaard `ubuntu-latest`-runner (zie PROGRESS.md,
-  run 35390915855) — ruim binnen de 6-uur-limiet. Voor fase 2-4 (basissysteem,
-  XFCE-desktop, devstack) is dit nog niet bewezen; die zijn zwaarder. Mitigatie
-  (fase-chaining + lokale fallback) staat, wordt per fase opnieuw getoetst.
+- Fase 1+2 (LFS hoofdstuk 5, 6 en 7 — cross-toolchain, temporary tools,
+  chroot binnengaan) zijn **bewezen** binnen GitHub Actions: gecombineerd
+  1u4m50s op een standaard `ubuntu-latest`-runner (zie PROGRESS.md, run
+  35401876921) — ruim binnen de 6-uur-limiet. Voor fase 3-4 (XFCE-desktop,
+  devstack) is dit nog niet bewezen; die zijn zwaarder (chapter 8 alleen al
+  ~85 pakketten). Mitigatie (fase-chaining + lokale fallback) staat, wordt
+  per fase opnieuw getoetst.
 - Exacte pakketlijst/versies voor de BLFS-desktopstack nog niet in detail
   uitgewerkt.
 - Window-tiling-implementatie (devilspie2/wmctrl) voor de live app-tegels
