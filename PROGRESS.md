@@ -96,6 +96,33 @@
   - `scripts/build-local.sh` in dezelfde lijn bijgewerkt voor later
     gebruik — **niet uitgevoerd**, blijft een bewuste latere keuze van
     Brionize (zie incident hierboven).
-- **Volgende stap:** deze fase-1+2-workflow triggeren, uitsluitend via
-  GitHub Actions volgen, en hier vastleggen of hij groen is (en zo niet,
-  op welk pakket/welke resource-limiet hij precies vastloopt).
+- **Fase 1+2-run getriggerd — fase 1 opnieuw geslaagd, fase 2 vastgelopen
+  op een dode download-URL (geen tijd/schijf-limiet).** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35394699042
+  — hoofdstuk 5 (fase 1) liep binnen dezelfde job weer volledig en foutloos
+  door ("Fase 1 (toolchain) volledig doorlopen"). Hoofdstuk 6 begon met
+  downloaden; 5 van de ~21 bronnen (perl, gettext, coreutils, findutils,
+  util-linux) kwamen binnen, toen brak `ch6-00-fetch-sources.sh` af op:
+  ```
+  https://invisible-mirror.net/archives/ncurses/current/ncurses-6.5-20250809.tgz
+  ERROR 404: Not Found
+  ```
+  **Root cause geverifieerd (niet uit het geheugen):** die mirror bewaart
+  alleen een rollend venster recente dagelijkse ncurses-snapshots onder
+  `current/`; de door LFS 12.4's officiële wget-list/md5sums vastgepinde
+  snapshot (20250809) is daar inmiddels uitgerold. Ook gecontroleerd en
+  NIET aanwezig op `anduin.linuxfromscratch.org`, `ftp.gnu.org` en
+  `invisible-island.net` — de exacte gevalideerde tarball lijkt nergens
+  meer te vinden. Nieuwste beschikbare snapshot op dezelfde mirror:
+  `ncurses-6.6-20260912.tgz` (een echte versiebump t.o.v. de door het boek
+  gevalideerde 6.5, geen garantie dat de rest van hoofdstuk 6/7 daarmee
+  identiek gedraagt).
+  - Dit is dus **geen** resource-limiet (tijd/schijf) — de job faalde
+    binnen enkele minuten, ruim vóór enige limiet in beeld kwam.
+  - **Openstaande keuze (niet zelf doorgedrukt):** ofwel bewust overstappen
+    op de nieuwste beschikbare ncurses-snapshot (6.6) met het geaccepteerde
+    risico van versie-afwijking t.o.v. wat LFS 12.4 valideerde, ofwel eerst
+    dieper zoeken naar een archiefkopie van de exact gepinde 6.5-build
+    (bv. Debian/Arch source-pool, Wayback Machine) voordat we verder gaan.
+- **Volgende stap:** deze keuze laten maken, dan `ch6-00-fetch-sources.sh`
+  aanpassen en de fase-1+2-run herhalen via GitHub Actions.
