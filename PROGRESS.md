@@ -124,5 +124,22 @@
     risico van versie-afwijking t.o.v. wat LFS 12.4 valideerde, ofwel eerst
     dieper zoeken naar een archiefkopie van de exact gepinde 6.5-build
     (bv. Debian/Arch source-pool, Wayback Machine) voordat we verder gaan.
-- **Volgende stap:** deze keuze laten maken, dan `ch6-00-fetch-sources.sh`
-  aanpassen en de fase-1+2-run herhalen via GitHub Actions.
+- **Exacte 6.5-build gevonden en byte-verifieerd — geen 6.6-versiebump
+  nodig.** Brionize koos eerst archieven proberen. Doorzocht:
+  - Software Heritage: content-lookup vereist sha1/sha256 (geen md5-optie),
+    en origin-search werd geblokkeerd door een Anubis-antibot-check —
+    geen bruikbaar resultaat gekregen.
+  - snapshot.debian.org: heeft ncurses 6.5-snapshots van januari/februari/
+    november 2025, maar niet de exacte 20250809-build — geen match.
+  - **Wayback Machine, op de oorspronkelijke dode URL zelf — succes.**
+    `http://web.archive.org/web/20260322033806/https://invisible-mirror.net/archives/ncurses/current/ncurses-6.5-20250809.tgz`
+    gedownload en de md5 vergeleken: `679987405412f970561cc85e1e6428a2` —
+    **exacte match** met LFS 12.4's officiële md5sums-regel. Dus
+    byte-identiek aan de door het boek gevalideerde build, geen
+    versie-afwijking.
+  - `ch6-00-fetch-sources.sh` aangepast: gebruikt nu die Wayback-URL voor
+    ncurses, met een uitgebreide comment die het waarom vastlegt (dode
+    originele mirror, waar wel/niet gezocht, checksum-bevestiging).
+- **Volgende stap:** de fase-1+2-run opnieuw triggeren via GitHub Actions
+  met deze fix, en het resultaat hier vastleggen (groen, of opnieuw een
+  concrete plek waar het vastloopt).
