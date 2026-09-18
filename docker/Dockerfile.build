@@ -1,0 +1,24 @@
+# Wegwerp-bouwsandbox voor de LFS/BLFS-build (chapter 5+).
+# Dit image wordt NOOIT onderdeel van het eindproduct (de ISO) — het is
+# uitsluitend een reproduceerbare "host system" die aan de LFS-vereisten
+# voldoet, identiek te gebruiken in GitHub Actions en lokaal.
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        bison \
+        gawk \
+        texinfo \
+        wget \
+        xz-utils \
+        patch \
+        python3 \
+        perl \
+        file \
+        ca-certificates \
+        rsync \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/lfs
