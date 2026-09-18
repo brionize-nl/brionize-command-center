@@ -53,6 +53,31 @@ interne schijf: een 24/7 "Citizen Developer & AI Command Center".
   tijd of schijfruimte. Geen aparte scripts nodig — één bouwpad, twee
   omgevingen.
 
+## Bronbeschikbaarheid & fallback-beleid (vaste bouw-aanpak)
+LFS-mirrors — vooral dated snapshots zoals ncurses' `current/`-map — rollen
+geregeld bestanden weg (ervaring van Brionize, bevestigd op 2026-09-18 toen
+`ncurses-6.5-20250809.tgz` van invisible-mirror.net verdween). Dit wordt niet
+telkens als losse onderbreking behandeld, maar is standaardgedrag van elke
+`fetch`-stap in elke fase, via de herbruikbare functie `fetch_verified()` in
+`scripts/lib/fetch-verified.sh` (gebruikt door `01-toolchain` en
+`02-base-system`, en straks ook `03-blfs-desktop`/`04-devstack-apps`):
+
+1. Probeer eerst de officiële/gepinde URL uit de LFS wget-list.
+2. Bij falen: automatisch, in volgorde, GNU-mirrornetwerk (`ftpmirror.gnu.org`,
+   alleen relevant voor `ftp.gnu.org`-URL's), Wayback Machine (via de CDX-API,
+   niet de rate-gelimiteerde `available`-API), Software Heritage en
+   snapshot.debian.org (beide laatste zijn best-effort — geen generieke
+   bestandsnaam-lookup mogelijk zonder vooraf bekende hash/pakketversie, dus
+   leveren in de praktijk zelden een hit, maar staan wel in de keten).
+3. **Verplichte checksum-verificatie** tegen de officiële LFS md5sums, hoe dan
+   ook — dit is de enige reden dat dit zonder mens/AI-tussenkomst mag: bij een
+   match is het bewijsbaar exact hetzelfde bestand, ongeacht de bron.
+4. Bij match: doorgaan, met een duidelijke logregel (bestand, gebruikte bron,
+   bevestigde checksum) in de build-logs — geen onderbreking.
+5. Bij falen van alle bronnen, of als nergens een checksum matcht: **stoppen
+   en escaleren** als een echt beslispunt (mogelijke versie-afwijking) — dit
+   wordt nooit stilzwijgend doorgedrukt naar een andere versie.
+
 ## Security / Secrets (grondregel, niet-onderhandelbaar)
 - **Nooit hardcoded secrets, accounts of persoonlijke data in de repo** —
   ook niet tijdens de publieke periode.

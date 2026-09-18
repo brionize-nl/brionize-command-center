@@ -3,6 +3,7 @@
 # pakketten die LFS 12.4 hoofdstuk 5 nodig heeft. Bron: officiële LFS 12.4
 # wget-list / md5sums (linuxfromscratch.org/lfs/view/stable/).
 source "$(dirname "$0")/env.sh"
+source "$(dirname "$0")/../lib/fetch-verified.sh"
 
 cd "$LFS/sources"
 
@@ -29,13 +30,7 @@ declare -A MD5=(
 )
 
 for f in "${!URLS[@]}"; do
-  if [ ! -f "$f" ]; then
-    echo "==> Downloaden: $f"
-    wget --no-verbose -O "$f" "${URLS[$f]}"
-  else
-    echo "==> Al aanwezig (cache): $f"
-  fi
-  echo "${MD5[$f]}  $f" | md5sum -c -
+  fetch_verified "$f" "${URLS[$f]}" "${MD5[$f]}" || exit 1
 done
 
 echo "==> Alle bronnen aanwezig en geverifieerd"

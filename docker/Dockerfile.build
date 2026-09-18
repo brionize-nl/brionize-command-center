@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         gawk \
         texinfo \
         wget \
+        curl \
         xz-utils \
         patch \
         python3 \

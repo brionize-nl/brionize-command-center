@@ -140,6 +140,39 @@
   - `ch6-00-fetch-sources.sh` aangepast: gebruikt nu die Wayback-URL voor
     ncurses, met een uitgebreide comment die het waarom vastlegt (dode
     originele mirror, waar wel/niet gezocht, checksum-bevestiging).
-- **Volgende stap:** de fase-1+2-run opnieuw triggeren via GitHub Actions
-  met deze fix, en het resultaat hier vastleggen (groen, of opnieuw een
-  concrete plek waar het vastloopt).
+- **Mijlpaal — fase 1+2 (hoofdstuk 5+6+7) volledig geslaagd in GitHub
+  Actions.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35397086967
+  — de bouwstap zelf ("Fase 1+2 ... bouwen") is **groen in 58m37s**: de
+  volledige LFS 12.4 cross-toolchain, alle 17 hoofdstuk-6-pakketten, chroot
+  binnengaan en alle hoofdstuk-7-pakketten (Gettext/Bison/Perl/Python/
+  Texinfo/Util-linux) plus cleanup — zonder fouten. Dit bevestigt: het
+  belangrijkste risico uit BLUEPRINT.md (past dit binnen 6u/14GB?) geldt nu
+  ook voor fase 2, met ruime marge (58 min van de 360 beschikbare).
+  - De job als geheel faalde wél, maar op een onschuldige, losse
+    workflow-stap NA de build: `sudo` ontbrak bij het archiveren van
+    `$LFS` naar een artifact (die stap draait als de gewone
+    runner-gebruiker, terwijl hoofdstuk 7 delen van `$LFS` naar
+    root:root met restrictieve rechten had gechown't binnen de
+    container). Gefixt met `sudo tar ...` + `sudo chown` terug naar de
+    runner-gebruiker.
+- **Brionize's feedback verwerkt: generiek fallback-mechanisme voor dode
+  bronnen, i.p.v. losse ad-hoc fixes per pakket.** Nieuwe herbruikbare
+  functie `fetch_verified()` in `scripts/lib/fetch-verified.sh`, gebruikt
+  door zowel `01-toolchain/01-fetch-sources.sh` als
+  `02-base-system/ch6-00-fetch-sources.sh` (en straks fase 3/4):
+  officiële URL → GNU-mirrornetwerk (voor `ftp.gnu.org`-URL's) → Wayback
+  Machine (via de CDX-API, niet de rate-gelimiteerde `available`-API) →
+  Software Heritage → snapshot.debian.org (laatste twee: best-effort,
+  zelden een hit, maar wel geprobeerd) — met verplichte md5-verificatie
+  bij elke kandidaat. Lokaal getest: normale download (m4) werkt via de
+  officiële URL, en de bekende dode ncurses-URL valt automatisch en
+  correct door naar de Wayback Machine met bevestigde checksum. De
+  eerder hardcoded Wayback-URL-override voor ncurses is teruggedraaid
+  naar de officiële URL — het generieke mechanisme lost dit nu vanzelf
+  op, ook voor toekomstige, nog onbekende gevallen. Policy vastgelegd in
+  BLUEPRINT.md ("Bronbeschikbaarheid & fallback-beleid").
+- **Volgende stap:** deze bundel (archiveer-fix + generiek
+  fetch-fallback-mechanisme) pushen, de fase-1+2-run herhalen via GitHub
+  Actions, en bevestigen dat hij nu volledig (inclusief archiveren) groen
+  is.

@@ -3,21 +3,13 @@
 # LFS 12.4 hoofdstuk 6 (temporary tools) nodig heeft. Bron: officiële LFS
 # 12.4 wget-list/md5sums.
 source "$(dirname "$0")/../01-toolchain/env.sh"
+source "$(dirname "$0")/../lib/fetch-verified.sh"
 
 cd "$LFS/sources"
 
 declare -A URLS=(
   [m4-1.4.20.tar.xz]="https://ftp.gnu.org/gnu/m4/m4-1.4.20.tar.xz"
-  # De originele mirror (invisible-mirror.net) bewaart alleen een rollend
-  # venster recente snapshots onder current/ — deze exacte, door LFS 12.4
-  # gepinde build is daar inmiddels uitgerold (HTTP 404, geverifieerd
-  # 2026-09-18). Ook niet gevonden op anduin.linuxfromscratch.org,
-  # ftp.gnu.org of invisible-island.net. Alternatieve bron: de Wayback
-  # Machine had een gearchiveerde kopie van exact deze URL; gedownload en
-  # de md5 kwam letterlijk overeen met LFS 12.4's officiële md5sums
-  # (679987405412f970561cc85e1e6428a2) — dus byte-identiek aan de
-  # door het boek gevalideerde build, geen versie-afwijking.
-  [ncurses-6.5-20250809.tgz]="https://web.archive.org/web/20260322033806/https://invisible-mirror.net/archives/ncurses/current/ncurses-6.5-20250809.tgz"
+  [ncurses-6.5-20250809.tgz]="https://invisible-mirror.net/archives/ncurses/current/ncurses-6.5-20250809.tgz"
   [bash-5.3.tar.gz]="https://ftp.gnu.org/gnu/bash/bash-5.3.tar.gz"
   [coreutils-9.7.tar.xz]="https://ftp.gnu.org/gnu/coreutils/coreutils-9.7.tar.xz"
   [diffutils-3.12.tar.xz]="https://ftp.gnu.org/gnu/diffutils/diffutils-3.12.tar.xz"
@@ -64,13 +56,7 @@ declare -A MD5=(
 )
 
 for f in "${!URLS[@]}"; do
-  if [ ! -f "$f" ]; then
-    echo "==> Downloaden: $f"
-    wget --no-verbose -O "$f" "${URLS[$f]}"
-  else
-    echo "==> Al aanwezig (cache): $f"
-  fi
-  echo "${MD5[$f]}  $f" | md5sum -c -
+  fetch_verified "$f" "${URLS[$f]}" "${MD5[$f]}" || exit 1
 done
 
 echo "==> Alle hoofdstuk-6/7-bronnen aanwezig en geverifieerd"

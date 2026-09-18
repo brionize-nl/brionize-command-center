@@ -69,8 +69,14 @@ jobs:
           if-no-files-found: ignore
 
       - name: $LFS archiveren (voor latere fasen)
+        # sudo nodig: hoofdstuk 7 heeft binnen de container delen van $LFS
+        # naar root:root gechown't (met restrictieve rechten, bv. /root op
+        # 0750) — deze losse workflow-stap draait als de gewone,
+        # onbevoorrechte runner-gebruiker.
         if: success()
-        run: tar -C "$RUNNER_TEMP/lfs" --exclude=sources -czf "$RUNNER_TEMP/lfs-base-system.tar.gz" .
+        run: |
+          sudo tar -C "$RUNNER_TEMP/lfs" --exclude=sources -czf "$RUNNER_TEMP/lfs-base-system.tar.gz" .
+          sudo chown "$(id -u):$(id -g)" "$RUNNER_TEMP/lfs-base-system.tar.gz"
 
       - name: Base-system-artifact uploaden
         if: success()
