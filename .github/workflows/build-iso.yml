@@ -1,0 +1,75 @@
+name: Build LFS toolchain (fase 1)
+
+# Reden om dit in de cloud te draaien i.p.v. lokaal: de LFS/BLFS-compile is
+# te zwaar om op Brionize's eigen (24/7 productie-)machine te draaien. Zie
+# BLUEPRINT.md / PROGRESS.md. Dit workflow-bestand bouwt dezelfde
+# Docker-sandbox en scripts als scripts/build-local.sh — één bouwpad, twee
+# omgevingen. De lokale variant blijft uitsluitend een bewuste, latere
+# fallback-optie voor Brionize zelf, niet iets dat automatisch draait.
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - "docker/Dockerfile.build"
+      - "scripts/01-toolchain/**"
+      - ".github/workflows/build-iso.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  toolchain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350 # ruim onder de harde 360-min (6u) job-limiet
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Vrije schijfruimte vergroten
+        # Standaard runner-tooling die we hier niet nodig hebben, opruimen
+        # zodat de LFS-sourcebomen + build-artifacts (kunnen oplopen tot
+        # 10-15GB+) passen binnen de beperkte vrije ruimte van de runner.
+        run: |
+          echo "Vrij vóór opschonen:"
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /opt/hostedtoolcache/CodeQL /usr/local/.ghcup \
+                      /usr/local/share/boost || true
+          docker system prune -af || true
+          echo "Vrij na opschonen:"
+          df -h /
+
+      - name: Docker-image bouwen
+        run: docker build -t brionize-lfs-toolchain:latest -f docker/Dockerfile.build .
+
+      - name: Fase 1 (LFS 12.4 cross-toolchain) bouwen
+        run: |
+          mkdir -p "$RUNNER_TEMP/lfs"
+          docker run --rm \
+            -v "$RUNNER_TEMP/lfs:/mnt/lfs" \
+            -v "$GITHUB_WORKSPACE/scripts/01-toolchain:/opt/lfs/scripts:ro" \
+            brionize-lfs-toolchain:latest \
+            bash /opt/lfs/scripts/run-all.sh
+
+      - name: Logs uploaden (ook bij falen)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1-toolchain-logs
+          path: ${{ runner.temp }}/lfs/sources/log-*.txt
+          retention-days: 1
+          if-no-files-found: ignore
+
+      - name: $LFS/tools archiveren (voor latere fasen)
+        if: success()
+        run: tar -C "$RUNNER_TEMP/lfs" -czf "$RUNNER_TEMP/lfs-tools.tar.gz" tools
+
+      - name: Toolchain-artifact uploaden
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lfs-tools-phase1
+          path: ${{ runner.temp }}/lfs-tools.tar.gz
+          retention-days: 1

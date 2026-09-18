@@ -27,3 +27,33 @@
 - **Volgende stap:** bouwmodus kiezen (Samen Bouwen / Autopilot), publieke
   GitHub-repo aanmaken en pushen, daarna starten met fase 1
   (`01-toolchain`-scripts).
+- Bouwmodus gekozen: **Autopilot** (met toestemming om Codex CLI erbij te
+  betrekken indien nuttig — beide staan lokaal geïnstalleerd/ingelogd).
+- Publieke repo aangemaakt en gepusht:
+  https://github.com/brionize-nl/brionize-command-center
+- Fase 1 (`01-toolchain`) geschreven: Docker-sandbox
+  (`docker/Dockerfile.build`) + modulaire scripts voor LFS 12.4 hoofdstuk
+  4.2/4.3 (directory-layout, lfs-gebruiker) en hoofdstuk 5
+  (Binutils/GCC pass 1, Linux API headers, Glibc, Libstdc++ pass 1).
+  Commando's en pakketversies/checksums letterlijk overgenomen van de
+  officiële LFS 12.4-boekpagina's (niet uit het geheugen), zie commit
+  `3d5b26b`.
+- **Incident:** de fase 1-build is per ongeluk lokaal gedraaid (Docker op
+  Brionize's eigen Asus) om te valideren dat de scripts kloppen. Dat is
+  fout — deze machine draait al 24/7 productie (n8n, een bot) en de
+  GCC-compile trok de load naar 10+. Brionize heeft dit terecht
+  gecorrigeerd; de container is handmatig gestopt (`docker stop`, exit
+  code 137/SIGKILL) en de partiële build-artifacts (~2GB onder `build/`)
+  zijn opgeruimd. **Les:** lokaal draaien op Brionize's machine is en
+  blijft een bewuste, latere fallback-keuze van Brionize zelf — niet iets
+  wat automatisch of "even ter validatie" gebeurt. Zie ook HANDOFF.md.
+  - Wat er wél uit dat afgebroken lokale run bleek (nuttig bewijs, geen
+    verspilde moeite): host-voorbereiding, source-download+checksums en
+    Binutils Pass 1 liepen zonder fouten door; GCC Pass 1 was middenin het
+    compileren (nog geen fout gezien) toen de container gestopt werd.
+- Validatie verplaatst naar **GitHub Actions**: `.github/workflows/build-iso.yml`
+  toegevoegd — draait dezelfde Docker-sandbox/scripts als
+  `scripts/build-local.sh` (één bouwpad, twee omgevingen), met een
+  disk-cleanup-stap en een 350-minuten job-timeout (marge onder de harde
+  6-uur-limiet). Logs en (bij succes) het `$LFS/tools`-archief worden als
+  workflow-artifact geüpload (retentie 1 dag).
