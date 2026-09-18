@@ -1,4 +1,4 @@
-name: Build LFS toolchain (fase 1)
+name: Build LFS base system (fase 1+2)
 
 # Reden om dit in de cloud te draaien i.p.v. lokaal: de LFS/BLFS-compile is
 # te zwaar om op Brionize's eigen (24/7 productie-)machine te draaien. Zie
@@ -14,6 +14,7 @@ on:
     paths:
       - "docker/Dockerfile.build"
       - "scripts/01-toolchain/**"
+      - "scripts/02-base-system/**"
       - ".github/workflows/build-iso.yml"
 
 permissions:
@@ -44,32 +45,37 @@ jobs:
       - name: Docker-image bouwen
         run: docker build -t brionize-lfs-toolchain:latest -f docker/Dockerfile.build .
 
-      - name: Fase 1 (LFS 12.4 cross-toolchain) bouwen
+      - name: Fase 1+2 (cross-toolchain + temporary tools + chroot) bouwen
+        # Fase 1 en fase 2 draaien bewust in ÉÉN docker-run-aanroep: de
+        # 'lfs'-gebruiker en $LFS-directorylayout die fase 1 aanmaakt leven
+        # in de container-laag zelf (niet in het $LFS-volume), dus een
+        # nieuwe 'docker run' zou ze niet hergebruiken. --privileged is
+        # nodig voor de mount/chroot-stappen in fase 2 (hoofdstuk 7).
         run: |
           mkdir -p "$RUNNER_TEMP/lfs"
-          docker run --rm \
+          docker run --rm --privileged \
             -v "$RUNNER_TEMP/lfs:/mnt/lfs" \
-            -v "$GITHUB_WORKSPACE/scripts/01-toolchain:/opt/lfs/scripts:ro" \
+            -v "$GITHUB_WORKSPACE/scripts:/opt/lfs/scripts:ro" \
             brionize-lfs-toolchain:latest \
-            bash /opt/lfs/scripts/run-all.sh
+            bash -c "bash /opt/lfs/scripts/01-toolchain/run-all.sh && bash /opt/lfs/scripts/02-base-system/run-all.sh"
 
       - name: Logs uploaden (ook bij falen)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase1-toolchain-logs
+          name: base-system-logs
           path: ${{ runner.temp }}/lfs/sources/log-*.txt
           retention-days: 1
           if-no-files-found: ignore
 
-      - name: $LFS/tools archiveren (voor latere fasen)
+      - name: $LFS archiveren (voor latere fasen)
         if: success()
-        run: tar -C "$RUNNER_TEMP/lfs" -czf "$RUNNER_TEMP/lfs-tools.tar.gz" tools
+        run: tar -C "$RUNNER_TEMP/lfs" --exclude=sources -czf "$RUNNER_TEMP/lfs-base-system.tar.gz" .
 
-      - name: Toolchain-artifact uploaden
+      - name: Base-system-artifact uploaden
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: lfs-tools-phase1
-          path: ${{ runner.temp }}/lfs-tools.tar.gz
+          name: lfs-base-system-phase2
+          path: ${{ runner.temp }}/lfs-base-system.tar.gz
           retention-days: 1

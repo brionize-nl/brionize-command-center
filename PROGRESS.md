@@ -68,6 +68,34 @@
   20-deprecation in actions/checkout@v4 / upload-artifact@v4, en de
   toekomstige ubuntu-latest→Ubuntu 26-migratie) — geen van beide
   blokkerend, geen actie nodig.
-- **Volgende stap:** fase 2 (`02-base-system` — LFS hoofdstuk 6-9:
-  temporary tools in chroot, basissysteem, generieke kernel, GRUB) op
-  dezelfde manier uitwerken en via GitHub Actions valideren.
+- **Fase 2 geschreven (nog niet gevalideerd):** `scripts/02-base-system/`
+  — LFS 12.4 hoofdstuk 6 (17 temporary-tools-pakketten: M4, Ncurses, Bash,
+  Coreutils, Diffutils, File, Findutils, Gawk, Grep, Gzip, Make, Patch,
+  Sed, Tar, Xz, Binutils/GCC pass 2) en hoofdstuk 7 (chown, virtuele
+  kernel-bestandssystemen mounten, chroot binnengaan, Gettext/Bison/Perl/
+  Python/Texinfo/Util-linux, cleanup). Commando's/versies/checksums weer
+  letterlijk van de officiële LFS 12.4-boekpagina's.
+  - **Scopingbeslissing:** hoofdstuk 8 (~85 pakketten, het volledige
+    basissysteem) en hoofdstuk 10 (kernel + GRUB-bootloader) zijn bewust
+    NIET in deze increment meegenomen — te groot om in één keer blind te
+    scripten zonder tussentijds bewijs. Dat wordt de volgende increment,
+    na een groene run van hoofdstuk 6+7.
+  - **Codex-review (tweede blik, zoals gevraagd):** vond een echte fout —
+    de `/etc/hosts`-heredoc had `::1 localhost` per ongeluk op dezelfde
+    regel als `127.0.0.1`. Bij het verifiëren tegen de ruwe HTML (niet de
+    samengevatte fetch) bleek er ook een eerdere eigen fout te zitten:
+    de `/etc/group`-regel voor `bin` was `bin:x:1:` i.p.v. het correcte
+    `bin:x:1:daemon` (WebFetch's samenvatting had dat stilzwijgend
+    weggelaten). Beide gecorrigeerd vóór er iets richting CI ging.
+  - GitHub Actions-workflow uitgebreid: fase 1+2 draaien nu bewust in
+    ÉÉN `docker run`-aanroep (de `lfs`-gebruiker/directorylayout van
+    fase 1 leeft in de containerlaag, niet in het `$LFS`-volume, dus een
+    nieuwe `docker run` zou opnieuw vanaf fase 1 moeten beginnen — dit is
+    dus geen dubbel werk maar noodzakelijk), met `--privileged` erbij
+    (nodig voor mount/chroot in hoofdstuk 7).
+  - `scripts/build-local.sh` in dezelfde lijn bijgewerkt voor later
+    gebruik — **niet uitgevoerd**, blijft een bewuste latere keuze van
+    Brionize (zie incident hierboven).
+- **Volgende stap:** deze fase-1+2-workflow triggeren, uitsluitend via
+  GitHub Actions volgen, en hier vastleggen of hij groen is (en zo niet,
+  op welk pakket/welke resource-limiet hij precies vastloopt).
