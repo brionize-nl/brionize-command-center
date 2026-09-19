@@ -402,6 +402,20 @@
     bewuste afwijking van de letterlijke boektekst is — geen wijziging
     van de logica zelf, alleen erkennen dat tee in onze specifieke
     uitvoeringscontext ook "online" is.
-- **Volgende stap:** dit committen/pushen en herhalen — dit zou nu voorbij
-  Stripping moeten komen, mogelijk zelfs hoofdstuk 8 helemaal afronden
-  (alleen `82-cleanup.sh` staat er nog na).
+- **MIJLPAAL — fase 2 (hoofdstuk 6+7+8) volledig groen.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35469074012
+  — **succeeded in 1u9m29s** (cache-hit voor fase 1+6+7, hoofdstuk 8 in
+  één moeite door, inclusief `81-stripping.sh` en `82-cleanup.sh`).
+  Bevestigd in de log: "Fase 2 (hoofdstuk 6 + 7 + 8) volledig doorlopen".
+  Artifacts: `lfs-base-system-phase2` (375MB, het complete LFS 12.4
+  basissysteem) en `base-system-logs` (4,9MB). Dit is het eerste bewijs
+  dat het volledige LFS-basissysteem (fase 1 + hoofdstuk 6, 7 en 8, ~100
+  pakketten in totaal) van begin tot eind reproduceerbaar bouwt in
+  GitHub Actions, ruim binnen de 6-uur-limiet, met een werkende
+  bootstrap-cache. Fase 3 (`03-blfs-desktop` — Xorg/XFCE) kan nu écht
+  beginnen, met een compleet, bewezen basissysteem als fundament en het
+  "Vast bouwpatroon per fase" (zie BLUEPRINT.md) vanaf de eerste regel
+  toegepast.
+- **Volgende stap:** hoofdstuk 10 (generieke kernel + GRUB-package) —
+  het laatste stukje van fase 2 volgens BLUEPRINT.md — of meteen door naar
+  fase 3, ter beoordeling/keuze van Brionize.

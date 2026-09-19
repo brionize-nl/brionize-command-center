@@ -142,14 +142,33 @@ als iets al misgaat, maar het standaard vertrekpunt:
    sub-checkpoints (bv. per logisch blok van 10-20 pakketten), niet pas
    achteraf wanneer blijkt dat één blok te groot is.
 4. **`-j2` als standaard `MAKEFLAGS`/`TESTSUITEFLAGS`**, niet `-j$(nproc)`.
-   Op de gedeelde GitHub Actions-runners bleek `-j$(nproc)` (4) GCC's
-   geheugenhongerige C++-bootstrap laten crashen zonder duidelijke
-   foutmelding (vermoedelijk een OOM-kill). Nieuwe fases beginnen met `-j2`
-   i.p.v. dit opnieuw tegen dezelfde limiet te ontdekken.
+   Ingesteld na een onverklaarde GCC-crash die destijds op een OOM-kill
+   leek — later bleek de échte oorzaak een vergeten `chown -R tester .`
+   (zie punt 6). `-j2` heeft dat dus waarschijnlijk niet zelf opgelost,
+   maar blijft staan als behoudende, bewezen-werkende standaard; er is
+   geen bewijs dat `-j$(nproc)` hier problemen geeft, alleen geen bewijs
+   dat het veilig is. Bewust niet terugveranderd zonder concrete reden.
 5. **Workflow-trigger breed, niet per submap.** `on.push.paths` triggert nu
    op `scripts/**` (i.p.v. elke submap losse te noemen) — het "een submap
    vergeten toe te voegen"-probleem (`scripts/lib/**` ontbrak eerder) kan
    zo structureel niet meer terugkomen.
+6. **Let op "online" binaries bij elke stap die levende systeembestanden
+   herschrijft (zoals Stripping).** Het LFS-boek weet zelf al welke
+   binaries (`bash find strip`) tijdens zo'n stap "in gebruik" zijn en
+   behandelt die speciaal (kopie bewerken, dan atomisch terugzetten). Onze
+   EIGEN orchestratie voegt daar zelf nog een "online" proces aan toe:
+   `tee`, omdat elke stap door `| tee logfile` wordt gepijpt voor logging.
+   Bij een toekomstige, vergelijkbare stap (of bij fase 3/4) eerst checken
+   of zo'n boek-eigen "online"-lijst bestaat en `tee` daar proactief aan
+   toevoegen, i.p.v. te wachten op "Text file busy".
+7. **Vergeet niet de losse `chown`/`groupadd`/`userdel`-regels rond een
+   uitgeschakelde test-suite.** Het uitcommentariëren van `su tester -c
+   "make check"` is niet genoeg — de voorbereidings-/opruimregels ervoor
+   (`chown -R tester .`, `groupadd ... -U tester`, `groupdel dummy`,
+   `userdel -r tester`) verwijzen naar een gebruiker die nooit bestaat in
+   deze pipeline en falen dan zelf, ook al draait er geen test meer. Bij
+   het schrijven van nieuwe pakketscripts (fase 3/4) hier direct op
+   controleren, niet pas na een mislukte run.
 
 ## Security / Secrets (grondregel, niet-onderhandelbaar)
 - **Nooit hardcoded secrets, accounts of persoonlijke data in de repo** —
@@ -160,13 +179,14 @@ als iets al misgaat, maar het standaard vertrekpunt:
 - Geen API-keys of tokens in de workflow-yml.
 
 ## Nog open / bekende risico's
-- Fase 1+2 (LFS hoofdstuk 5, 6 en 7 — cross-toolchain, temporary tools,
-  chroot binnengaan) zijn **bewezen** binnen GitHub Actions: gecombineerd
-  1u4m50s op een standaard `ubuntu-latest`-runner (zie PROGRESS.md, run
-  35401876921) — ruim binnen de 6-uur-limiet. Voor fase 3-4 (XFCE-desktop,
-  devstack) is dit nog niet bewezen; die zijn zwaarder (chapter 8 alleen al
-  ~85 pakketten). Mitigatie (fase-chaining + lokale fallback) staat, wordt
-  per fase opnieuw getoetst.
+- **Fase 2 (LFS hoofdstuk 6, 7 én 8 — temporary tools, chroot, het volledige
+  basissysteem van ~100 pakketten) is volledig bewezen binnen GitHub
+  Actions:** 1u9m29s met bootstrap-cache-hit (zie PROGRESS.md, run
+  35469074012) — ruim binnen de 6-uur-limiet. Voor fase 3-4 (XFCE-desktop,
+  devstack) is dit nog niet bewezen; die zijn zwaarder (Xorg alleen al
+  ~40+ pakketten, XFCE-core 18, plus GTK3/glib-stack). Mitigatie
+  (checkpoints/cache al VANAF de eerste fase-3-stap, niet pas achteraf —
+  zie "Vast bouwpatroon per fase") staat, wordt per fase opnieuw getoetst.
 - Exacte pakketlijst/versies voor de BLFS-desktopstack nog niet in detail
   uitgewerkt.
 - Window-tiling-implementatie (devilspie2/wmctrl) voor de live app-tegels
