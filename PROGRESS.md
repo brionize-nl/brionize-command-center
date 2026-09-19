@@ -186,7 +186,54 @@
   Geen onderbreking nodig, gewoon doorgebouwd. Hoofdstuk 5+6+7 zijn
   hiermee volledig bewezen binnen GitHub Actions, met een generiek,
   herbruikbaar fallback-mechanisme voor toekomstige dode bronnen.
-- **Volgende stap:** fase 3 (`03-blfs-desktop` — Xorg, XFCE, werkbladen,
-  Conky, window-tiling) uitwerken op dezelfde manier: commando's/versies
-  van de officiële bronnen, `fetch_verified()` hergebruiken, alleen via
-  GitHub Actions valideren.
+- **Scope-correctie ontdekt vóór fase 3.** Onderzocht wat BLFS (Xorg/XFCE)
+  precies vereist: een VOLLEDIG LFS-basissysteem, niet alleen de
+  chroot-bootstrap (hoofdstuk 5-7) die we tot dan hadden. Zonder hoofdstuk
+  8 (~80 pakketten, o.a. meson/ninja/pkgconf/OpenSSL/Perl/Python-modules)
+  zouden de eerste Xorg-scripts direct falen op ontbrekende build-tools.
+  Ook ontdekt: kernel + GRUB horen bij hoofdstuk 10, niet 9 (BLUEPRINT.md
+  gecorrigeerd). Aan Brionize voorgelegd — akkoord: eerst hoofdstuk 8
+  afbouwen ("we moeten doen hoe het hoort"), fase 3 pas daarna.
+- **Hoofdstuk 8 (basissysteem, 80 pakketten) uitgewerkt met Codex CLI als
+  research/schrijf-assistent, ikzelf als architect/reviewer.** Aanpak:
+  - Alle 80 boekpagina's + de officiële wget-list/md5sums zelf via `curl`
+    als ruwe HTML/tekst lokaal opgeslagen (niet via de samenvattende
+    webfetch-tool, na eerdere ervaring dat die multi-line content kan
+    corrumperen) — Codex kreeg alleen deze lokale bestanden, geen
+    netwerktoegang nodig (die was toch kapot in zijn sandbox).
+  - Codex schreef `scripts/02-base-system/ch8-00-fetch-sources.sh` (80
+    bronnen + 7 patches, buiten chroot, als root — de `lfs`-gebruiker
+    heeft na hoofdstuk 7's chown geen rechten meer) en 80
+    `inside-chroot-ch8/NN-<pkg>.sh`-scripts + orchestrator, exact volgens
+    de boek-volgorde 8.3–8.82.
+  - **Zelf gecontroleerd (steekproef, niet blind aangenomen):**
+    fetch-sources-URL's/MD5's/patches tegen de ruwe wget-list/md5sums
+    (klopten, inclusief een grappige bevestiging dat de eerdere
+    "psmimic"-typo in mijn allereerste wget-list-fetch een eigen
+    samenvattingsfout was — de officiële naam is gewoon "psmisc"),
+    plus Glibc- en Meson-scripts inhoudelijk nagelezen.
+  - **Kritieke fix vóór dit naar CI mag:** Shadow's pagina draait
+    interactief `passwd root` — dat blokkeert een niet-interactieve
+    CI-build voor altijd (geen terminal om een wachtwoord in te typen).
+    Vervangen door `passwd -l root` (account blijft vergrendeld; de
+    first-boot wizard op de doel-pc regelt het echte wachtwoord — grondregel
+    "nooit hardcoded secrets" blijft dus ook hier overeind).
+  - **Risico onderkend en gemitigeerd:** 53 van de 80 scripts bevatten
+    test-suites (`make check`) — voor Glibc/GCC/Binutils/GMP/MPFR kunnen
+    die individueel langer duren dan de build zelf, en falen soms om
+    omgevingsredenen die niets zeggen over de build (chroot-in-Docker-in-
+    CI-VM mist bepaalde capabilities/hardware). Op Codex' tweede
+    doorgang: alle test-suite-aanroepen + hun afhankelijke
+    logcontroles uitgecommentarieerd (niet verwijderd — makkelijk terug
+    te zetten voor een handmatige verificatie-run later), met duidelijke
+    reden in elk bestand. Dit is een bewuste, transparante
+    snelheid/betrouwbaarheid-keuze, geen kwaliteitscompromis op het
+    eindresultaat.
+  - Alle 126 scripts in het project (incl. fase 1) opnieuw met `bash -n`
+    gecontroleerd — geen syntaxfouten. Top-level `run-all.sh` uitgebreid
+    met de hoofdstuk-8-stap (bronnen ophalen buiten chroot, dan een eigen
+    chroot-sessie voor alle 82 hoofdstuk-8-stappen).
+- **Volgende stap:** dit committen/pushen, de fase-1+2-run (nu incl.
+  hoofdstuk 8) triggeren via GitHub Actions, en het echte resultaat hier
+  vastleggen (groen, of het exacte pakket/probleem waar hij op vastloopt
+  — dit is de eerste keer dat dit ~80-pakketten-blok echt getest wordt).

@@ -1,10 +1,10 @@
 #!/bin/bash
-# Orchestreert fase 2 (LFS 12.4 hoofdstuk 6: temporary tools, en hoofdstuk
-# 7: chroot binnengaan + laatste temporary tools + cleanup). Draait als
-# root. Vereist dat fase 1 (scripts/01-toolchain/run-all.sh) al in
-# dezelfde container/$LFS-volume is doorlopen (lfs-gebruiker + $LFS/tools
-# bestaan al). Vereist --privileged (of minimaal CAP_SYS_ADMIN) i.v.m.
-# mount/chroot in hoofdstuk 7.
+# Orchestreert fase 2 (LFS 12.4 hoofdstuk 6: temporary tools, hoofdstuk 7:
+# chroot binnengaan + laatste temporary tools + cleanup, en hoofdstuk 8:
+# het volledige basissysteem, ~80 pakketten). Draait als root. Vereist dat
+# fase 1 (scripts/01-toolchain/run-all.sh) al in dezelfde container/
+# $LFS-volume is doorlopen (lfs-gebruiker + $LFS/tools bestaan al).
+# Vereist --privileged (of minimaal CAP_SYS_ADMIN) i.v.m. mount/chroot.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -66,4 +66,26 @@ else
   exit 1
 fi
 
-echo "==> Fase 2 (hoofdstuk 6 + 7) volledig doorlopen"
+echo "==> Fase 2 / Hoofdstuk 8: volledige basissysteem — bronnen ophalen (buiten chroot, als root)"
+bash "$SCRIPT_DIR/ch8-00-fetch-sources.sh"
+
+echo "==> Scripts voor hoofdstuk 8 zichtbaar maken binnen de chroot"
+mkdir -pv "$LFS/opt/lfs-scripts-ch8"
+mount --bind "$SCRIPT_DIR/inside-chroot-ch8" "$LFS/opt/lfs-scripts-ch8"
+
+echo "==> Hoofdstuk 8 binnen chroot uitvoeren"
+if chroot "$LFS" /usr/bin/env -i \
+    HOME=/root \
+    TERM="$TERM" \
+    PS1='(lfs chroot) \u:\w\$ ' \
+    PATH=/usr/bin:/usr/sbin \
+    MAKEFLAGS="-j$(nproc)" \
+    TESTSUITEFLAGS="-j$(nproc)" \
+    /bin/bash /opt/lfs-scripts-ch8/run-all.sh 2>&1 | tee "$LOG_DIR/log-ch8-inside-chroot.txt"; then
+  echo "==> Hoofdstuk 8 (binnen chroot) geslaagd"
+else
+  echo "==> Hoofdstuk 8 (binnen chroot) MISLUKT — zie $LOG_DIR/log-ch8-inside-chroot.txt"
+  exit 1
+fi
+
+echo "==> Fase 2 (hoofdstuk 6 + 7 + 8) volledig doorlopen"

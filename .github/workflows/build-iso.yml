@@ -45,12 +45,12 @@ jobs:
       - name: Docker-image bouwen
         run: docker build -t brionize-lfs-toolchain:latest -f docker/Dockerfile.build .
 
-      - name: Fase 1+2 (cross-toolchain + temporary tools + chroot) bouwen
-        # Fase 1 en fase 2 draaien bewust in ÉÉN docker-run-aanroep: de
-        # 'lfs'-gebruiker en $LFS-directorylayout die fase 1 aanmaakt leven
-        # in de container-laag zelf (niet in het $LFS-volume), dus een
-        # nieuwe 'docker run' zou ze niet hergebruiken. --privileged is
-        # nodig voor de mount/chroot-stappen in fase 2 (hoofdstuk 7).
+      - name: Fase 1+2 (toolchain + temporary tools + volledig basissysteem) bouwen
+        # Fase 1 en fase 2 (hoofdstuk 6, 7 én 8) draaien bewust in ÉÉN
+        # docker-run-aanroep: de 'lfs'-gebruiker en $LFS-directorylayout die
+        # fase 1 aanmaakt leven in de containerlaag zelf (niet in het
+        # $LFS-volume), dus een nieuwe 'docker run' zou ze niet hergebruiken.
+        # --privileged is nodig voor de mount/chroot-stappen.
         run: |
           mkdir -p "$RUNNER_TEMP/lfs"
           docker run --rm --privileged \

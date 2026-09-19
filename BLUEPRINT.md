@@ -22,8 +22,13 @@ interne schijf: een 24/7 "Citizen Developer & AI Command Center".
 ## Bouwfasen
 1. `01-toolchain` — LFS hoofdstuk 5 & 6: cross-compiler (binutils, gcc,
    glibc), virtuele bestandssystemen, chroot.
-2. `02-base-system` — LFS hoofdstuk 7–9: basissysteem, generieke kernel,
-   GRUB-bootloader.
+2. `02-base-system` — LFS hoofdstuk 7 (chroot binnengaan + laatste
+   temporary tools), hoofdstuk 8 (het volledige basissysteem, ~80
+   pakketten) en later hoofdstuk 10 (generieke kernel + GRUB-package).
+   Correctie t.o.v. eerdere aanname: kernel/GRUB zitten in hoofdstuk 10,
+   niet 9 — hoofdstuk 9 is "systeemconfiguratie" (bootscripts/locale/
+   netwerk/udev) en hoort grotendeels bij de installer/first-boot-stap op
+   de doel-pc, niet bij de generieke image-build.
 3. `03-blfs-desktop` — Xorg, XFCE (dark theme), 3 standaard werkbladen
    (Command Center / AI Matrix / Dev Studio, hotkeys Super+1/2/3, door
    gebruiker vrij uitbreidbaar), Conky (live systeem-HUD: CPU/RAM/opslag,
