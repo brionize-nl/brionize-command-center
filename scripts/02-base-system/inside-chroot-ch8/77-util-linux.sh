@@ -29,8 +29,9 @@ make
 # Deze root-test is alleen voor het gebootte LFS-systeem; binnen chroot uitsluitend als tester testen.
 
 touch /etc/fstab
-chown -R tester .
-# Tests standaard overgeslagen in deze pipeline wegens CI-tijd en betrouwbaarheid.
+# Tests standaard overgeslagen in deze pipeline wegens CI-tijd en betrouwbaarheid
+# ('tester'-gebruiker bestaat daarom niet, dus ook de chown ervoor overgeslagen).
+# chown -R tester .
 # su tester -c "make -k check"
 
 make install

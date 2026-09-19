@@ -32,8 +32,10 @@ ulimit -s -H unlimited
 
 sed -e '/cpython/d' -i ../gcc/testsuite/gcc.dg/plugin/plugin.exp
 
-chown -R tester .
-# Tests standaard overgeslagen in deze pipeline wegens CI-tijd en betrouwbaarheid.
+# Tests standaard overgeslagen in deze pipeline wegens CI-tijd en
+# betrouwbaarheid — de 'tester'-gebruiker uit het boek bestaat daarom niet
+# in deze build, dus ook de chown-voorbereiding ervoor is overgeslagen.
+# chown -R tester .
 # su tester -c "PATH=$PATH make -k check"
 
 # ../contrib/test_summary
@@ -50,18 +52,22 @@ ln -sv gcc.1 /usr/share/man/man1/cc.1
 ln -sfv ../../libexec/gcc/$(gcc -dumpmachine)/15.2.0/liblto_plugin.so \
         /usr/lib/bfd-plugins/
 
-echo 'int main(){}' | cc -x c - -v -Wl,--verbose &> dummy.log
-readelf -l a.out | grep ': /lib'
-
-grep -E -o '/usr/lib.*/S?crt[1in].*succeeded' dummy.log
-
-grep -B4 '^ /usr/include' dummy.log
-
-grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g'
-
-grep "/lib.*/libc.so.6 " dummy.log
-
-grep found dummy.log
+# Diagnostische sanity-check uit het boek — net als bij Glibc (fase 1) is
+# dit een controle die een mens met het oog beoordeelt; een grep zonder
+# match hier betekent niet per definitie een kapotte toolchain (make
+# install hierboven is al met set -e afgedwongen), dus set +e zodat dit de
+# build niet alsnog laat mislukken op het allerlaatste moment.
+{
+  set +e
+  echo 'int main(){}' | cc -x c - -v -Wl,--verbose &> dummy.log
+  readelf -l a.out | grep ': /lib'
+  grep -E -o '/usr/lib.*/S?crt[1in].*succeeded' dummy.log
+  grep -B4 '^ /usr/include' dummy.log
+  grep 'SEARCH.*/usr/lib' dummy.log | sed 's|; |\n|g'
+  grep "/lib.*/libc.so.6 " dummy.log
+  grep found dummy.log
+  set -e
+} | tee gcc-sanity-check.log
 
 rm -v a.out dummy.log
 

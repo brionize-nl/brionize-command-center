@@ -11,8 +11,9 @@ sed -i 's/extras//' Makefile.in
 
 make
 
-chown -R tester .
-# Tests standaard overgeslagen in deze pipeline wegens CI-tijd en betrouwbaarheid.
+# Tests standaard overgeslagen in deze pipeline wegens CI-tijd en betrouwbaarheid
+# ('tester'-gebruiker bestaat daarom niet, dus ook de chown ervoor overgeslagen).
+# chown -R tester .
 # su tester -c "PATH=$PATH make check"
 
 rm -f /usr/bin/gawk-5.3.2

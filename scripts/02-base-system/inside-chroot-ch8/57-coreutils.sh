@@ -20,15 +20,14 @@ make
 # Tests standaard overgeslagen in deze pipeline wegens CI-tijd en betrouwbaarheid.
 # make NON_ROOT_USERNAME=tester check-root
 
-groupadd -g 102 dummy -U tester
-
-chown -R tester . 
-
-# Tests standaard overgeslagen in deze pipeline wegens CI-tijd en betrouwbaarheid.
+# Tests standaard overgeslagen in deze pipeline wegens CI-tijd en betrouwbaarheid
+# ('tester'-gebruiker bestaat daarom niet, dus ook de groupadd/chown/groupdel
+# eromheen overgeslagen).
+# groupadd -g 102 dummy -U tester
+# chown -R tester .
 # su tester -c "PATH=$PATH make -k RUN_EXPENSIVE_TESTS=yes check" \
 #    < /dev/null
-
-groupdel dummy
+# groupdel dummy
 
 make install
 

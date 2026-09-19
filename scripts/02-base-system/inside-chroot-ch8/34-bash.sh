@@ -12,9 +12,9 @@ cd bash-5.3
 
 make
 
-chown -R tester .
-
-# Tests standaard overgeslagen in deze pipeline wegens CI-tijd en betrouwbaarheid.
+# Tests standaard overgeslagen in deze pipeline wegens CI-tijd en betrouwbaarheid
+# ('tester'-gebruiker bestaat daarom niet, dus ook de chown ervoor overgeslagen).
+# chown -R tester .
 # LC_ALL=C.UTF-8 su -s /usr/bin/expect tester << "EOF"
 # set timeout -1
 # spawn make tests

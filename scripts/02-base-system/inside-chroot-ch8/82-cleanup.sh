@@ -9,7 +9,8 @@ find /usr/lib /usr/libexec -name \*.la -delete
 
 find /usr -depth -name $(uname -m)-lfs-linux-gnu\* | xargs rm -rf
 
-userdel -r tester
+# Tests standaard overgeslagen in deze pipeline — 'tester' is nooit aangemaakt.
+# userdel -r tester
 
 cd /sources
 echo "==> Cleaning Up klaar"

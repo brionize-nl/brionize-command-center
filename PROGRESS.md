@@ -335,8 +335,47 @@
     - `ch7-01-changing-owner.sh`: chown't nu elk pad afzonderlijk en alleen
       als het nog bestaat, i.p.v. één brace-expansion die in zijn geheel
       faalt zodra `tools` al weg is.
-- **Volgende stap:** dit committen/pushen en de run herhalen. Dit is nu
-  het bewijs-moment voor drie dingen tegelijk: de gefixte cache-architectuur
-  (moet nu wél een geldig archief opslaan), de `-j2`-fix (nog niet echt
-  getest — hoofdstuk 8 is nog niet gestart geraakt), en of hoofdstuk 8 zelf
-  na al deze omgevingsfixes daadwerkelijk doorloopt.
+- **Grote mijlpaal — hoofdstuk 8 kwam 26 van de 82 stappen ver (t/m Shadow),
+  cache-architectuur werkt bewezen, en de écht hardnekkige GCC-crash is
+  eindelijk gevonden.** Run 35456151280 (1u22m59s): "Fase 1 + hoofdstuk
+  6+7 bouwen", "Bootstrap-cache-archief bouwen" én "...opslaan" liepen
+  alle drie foutloos door (self-hosted ncurses-mirror werkte meteen op de
+  eerste poging, cache-tar-fix werkt bewezen) — hoofdstuk 8 begon en
+  pakketten 1–26 (Man-pages t/m Shadow) slaagden allemaal. `27-gcc.sh`
+  faalde weer, maar dit keer met genoeg bewijs om de ECHTE oorzaak te
+  vinden:
+  - **Root cause (Anti-Patch-Loop: pas nu écht gevonden, niet aangenomen):**
+    GCC's `make`/`make install` **liep gewoon volledig door** (te zien in
+    de log: "make[1]: Leaving directory .../build" — de build was klaar).
+    De regel direct erna, `chown -R tester .`, faalde met
+    `chown: invalid user: 'tester'` — een voorbereidingsregel voor het
+    boek-testsuite-account dat we nooit aanmaken (we draaien geen tests).
+    Codex' eerdere test-uitschakel-pass had wél de `su tester -c "make
+    check"`-regels uitgecommentarieerd, maar **niet** de losse
+    `chown`/`groupadd`/`userdel`-regels die dat account voorbereidden of
+    opruimden. Met `set -euo pipefail` breekt zo'n enkele mislukte
+    `chown` het hele script, vlak vóór/na een succesvolle build.
+  - **Dit verklaart nu ook de EERSTE GCC-crash (run 35439085621), vóór de
+    `-j2`-fix er al was:** dat was zeer waarschijnlijk exact dezelfde
+    `chown tester`-crash, niet een OOM-kill. De `-j2`-wijziging heeft dus
+    waarschijnlijk niets opgelost — maar blijft staan als behoudende,
+    veilige standaardwaarde (geen reden om terug te draaien, geen bewijs
+    dat `-j$(nproc)` wél veilig is).
+  - **Fix:** dezelfde `chown -R tester .`-regel (plus varianten:
+    `groupadd ... -U tester`, `groupdel dummy`, `userdel -r tester`) kwam
+    voor in **11 scripts** (27-gcc, 29-sed, 34-bash, 57-coreutils,
+    59-gawk, 60-findutils, 67-make, 71-vim, 76-procps-ng, 77-util-linux,
+    82-cleanup) — stuk voor stuk gevonden via een gerichte grep en
+    uitgecommentarieerd, met dezelfde reden erbij. Zonder deze fix waren
+    we bij ELK van deze 11 pakketten opnieuw op dezelfde manier
+    vastgelopen.
+  - **Proactief ook gefixt (nog niet eens tegenaan gelopen):** GCC's eigen
+    diagnostische sanity-check (regels 55-66, identiek patroon aan de
+    Glibc-sanity-check uit fase 1) stond nog niet in een `set +e`-blok —
+    een enkele grep-zonder-match had de build op het allerlaatste moment
+    (na een succesvolle install) alsnog kunnen laten mislukken. Nu net als
+    bij Glibc afgeschermd en naar een logbestand geschreven.
+- **Volgende stap:** dit committen/pushen en de run herhalen — dit zou nu
+  voorbij hoofdstuk 27 moeten komen. Als er nog meer `tester`-achtige
+  aannames verstopt zitten in latere pakketten, is dat de volgende plek om
+  te kijken (dezelfde grep-methode herhalen).
