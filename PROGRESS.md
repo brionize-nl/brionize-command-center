@@ -375,7 +375,33 @@
     een enkele grep-zonder-match had de build op het allerlaatste moment
     (na een succesvolle install) alsnog kunnen laten mislukken. Nu net als
     bij Glibc afgeschermd en naar een logbestand geschreven.
-- **Volgende stap:** dit committen/pushen en de run herhalen — dit zou nu
-  voorbij hoofdstuk 27 moeten komen. Als er nog meer `tester`-achtige
-  aannames verstopt zitten in latere pakketten, is dat de volgende plek om
-  te kijken (dezelfde grep-methode herhalen).
+- **Zeer grote mijlpaal — alle 80 hoofdstuk-8-pakketten geslaagd, cache-hit
+  bewezen, en de bijna-laatste stap (Stripping) gaf een nieuwe, precieze
+  bug.** Run 35460767929 (1u22m54s, coordinator zag 'm live falen na een
+  tijdelijke eigen netwerk/DNS-hapering die de sessie onderbrak — verder
+  geen impact): "Fase 1 + hoofdstuk 6+7 bouwen" was dit keer een echte
+  **cache-hit** (bevestigd: de archief-bouw/opslaan-stappen stonden op
+  "-", dus overgeslagen — de bootstrap-cache werkt zoals bedoeld, en de
+  hoofdstuk-8-scripts staan bewust buiten de cache-hash, dus dit was de
+  eerste keer dat die hit ook echt gebeurde). Hoofdstuk 8 liep daardoor in
+  één moeite door: **alle 80 pakketten (Man-pages t/m SysVinit) slaagden**,
+  inclusief GCC (de chown-tester-fix werkt bewezen). Pas bij
+  `81-stripping.sh` (hoofdstuk 8.84, één-na-laatste stap) een nieuwe fout:
+  ```
+  strip: unable to copy file '/usr/bin/tee'; reason: Text file busy
+  ```
+  - **Root cause:** het boek weet zelf al dat `bash`, `find` en `strip`
+    "in gebruik" zijn tijdens deze stap en behandelt die drie speciaal
+    (kopie stripen, dan atomisch terugzetten via `install`, i.p.v. het
+    live bestand direct aan te passen). `tee` staat terecht niet in die
+    boek-lijst — maar onze EIGEN orchestratie (`run-all.sh` pijpt elke
+    chroot-stap door `| tee logfile`) maakt `tee` bij ONS óók de hele tijd
+    "in gebruik", en dat kende het boek natuurlijk niet.
+  - **Fix:** `tee` toegevoegd aan `online_usrbin` in `81-stripping.sh`
+    (naast `bash find strip`), met een duidelijke comment waarom dit een
+    bewuste afwijking van de letterlijke boektekst is — geen wijziging
+    van de logica zelf, alleen erkennen dat tee in onze specifieke
+    uitvoeringscontext ook "online" is.
+- **Volgende stap:** dit committen/pushen en herhalen — dit zou nu voorbij
+  Stripping moeten komen, mogelijk zelfs hoofdstuk 8 helemaal afronden
+  (alleen `82-cleanup.sh` staat er nog na).

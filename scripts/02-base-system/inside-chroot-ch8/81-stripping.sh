@@ -22,7 +22,12 @@ for LIB in $save_usrlib; do
     rm /tmp/$LIB
 done
 
-online_usrbin="bash find strip"
+online_usrbin="bash find strip tee"
+# 'tee' toegevoegd t.o.v. de letterlijke boektekst: onze eigen orchestratie
+# (run-all.sh) pijpt elke chroot-stap door 'tee' naar een logbestand, dus
+# tee is bij ONS ook "in gebruik" tijdens deze stap (het boek kent die
+# aanpak niet en somt daarom alleen bash/find/strip op). Zonder deze
+# toevoeging: "strip: unable to copy file '/usr/bin/tee'; Text file busy".
 online_usrlib="libbfd-2.45.so
                libsframe.so.2.0.0
                libhistory.so.8.3
