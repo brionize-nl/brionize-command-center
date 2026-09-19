@@ -303,7 +303,40 @@
     volgende bron gaat — vangt precies dit soort "bron is weer half terug"
     scenario op zonder een oneindige retry te worden. Lokaal functioneel
     getest (mock die pas op de 3e poging slaagt) — werkt correct.
-- **Volgende stap:** dit committen/pushen en de run herhalen. Nog steeds
-  eerste echt bewijs nodig voor: de `-j2`-fix (GCC-stap in hoofdstuk 8) en
-  de bootstrap-cache-hit (verwacht bij een run waar deze scripts zelf niet
-  wijzigen).
+- **Grote stap vooruit — fase 1+6+7 volledig geslaagd (retry-fix werkt),
+  daarna twee échte bugs in de eigen cache-architectuur gevonden (niet in
+  de hoofdstuk-8-scripts).** Run 35450825578 (1u3m46s): "Fase 1 +
+  hoofdstuk 6+7 bouwen" liep dit keer helemaal foutloos door — inclusief
+  de ncurses/Wayback-fetch, dus de retry-met-backoff-fix werkt. Daarna,
+  per de Anti-Patch-Loop-regel, de logs van déze concrete fout
+  geïnspecteerd (`gh api .../jobs/<id>/logs`, want `gh run view --log-failed`
+  gaf onverklaarbaar niets terug voor deze run) i.p.v. blind opnieuw te
+  proberen:
+  1. **Cache-save faalde** (`tar: /root: Permission denied`,
+     `/var/log/btmp: Permission denied`) — `actions/cache/save` draait
+     altijd als de gewone, onbevoorrechte runner-user en kan de door
+     hoofdstuk 7 bewust root-only gemaakte bestanden (`/root` op 0750,
+     `btmp` op 0600) niet lezen. Eigen ontwerpfout: had dit meteen moeten
+     zien, want exact dezelfde reden waarom de `$LFS archiveren`-stap
+     eerder al `sudo` nodig had.
+  2. **Hoofdstuk 8-stap crashte daardoor secundair**: zonder geslaagde
+     cache-save begint die stap alsnog met een verse, kale `$LFS`-map, en
+     `ch7-01-changing-owner.sh` (die via `SKIP_BOOTSTRAP` altijd opnieuw
+     draait) deed `chown ... $LFS/tools` — een map die op dat moment al
+     door hoofdstuk 7's eigen cleanup verwijderd was. `chown` op een
+     ontbrekend pad met brace-expansion faalt hard.
+  - **Fixes:**
+    - Cache-mechanisme omgebouwd: i.p.v. de rechtstreekse `$LFS`-map
+      cachen, nu een los tar-bestand (`lfs-bootstrap-cache.tar.zst`) dat
+      MET `sudo tar` wordt aangemaakt (root kan alles lezen) en dan terug
+      gechown't naar de runner-user vóór `actions/cache/save` het oppikt.
+      Bij een hit wordt dat archief met `sudo tar -xpf` uitgepakt (behoudt
+      root-eigendom/rechten correct).
+    - `ch7-01-changing-owner.sh`: chown't nu elk pad afzonderlijk en alleen
+      als het nog bestaat, i.p.v. één brace-expansion die in zijn geheel
+      faalt zodra `tools` al weg is.
+- **Volgende stap:** dit committen/pushen en de run herhalen. Dit is nu
+  het bewijs-moment voor drie dingen tegelijk: de gefixte cache-architectuur
+  (moet nu wél een geldig archief opslaan), de `-j2`-fix (nog niet echt
+  getest — hoofdstuk 8 is nog niet gestart geraakt), en of hoofdstuk 8 zelf
+  na al deze omgevingsfixes daadwerkelijk doorloopt.
