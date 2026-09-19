@@ -97,10 +97,27 @@ fetch_verified() {
   src_labels+=("Software Heritage");   src_funcs+=("_fv_try_swh");              src_args+=("$primary_url")
   src_labels+=("snapshot.debian.org"); src_funcs+=("_fv_try_debian_snapshot");  src_args+=("$primary_url")
 
-  local i
+  local i attempt ok
   for i in "${!src_labels[@]}"; do
     echo "==> [$filename] proberen via ${src_labels[$i]}..."
-    if "${src_funcs[$i]}" "${src_args[$i]}" "$filename"; then
+    # 3 pogingen per bron met een korte pauze ertussen — ondervonden dat de
+    # Wayback Machine na een storing een wankele/schokkerige herstelfase kan
+    # hebben (soms wel, soms niet bereikbaar binnen enkele minuten), waarbij
+    # één losse poging pech kan hebben terwijl de bron feitelijk alweer
+    # (grotendeels) werkt. Geen eindeloze retry — na 3x mislukt gaat de
+    # keten door naar de volgende bron, zoals bedoeld.
+    ok=false
+    for attempt in 1 2 3; do
+      if "${src_funcs[$i]}" "${src_args[$i]}" "$filename"; then
+        ok=true
+        break
+      fi
+      if [ "$attempt" -lt 3 ]; then
+        echo "==> [$filename] ${src_labels[$i]}: poging $attempt mislukt, nieuwe poging over 10s..."
+        sleep 10
+      fi
+    done
+    if [ "$ok" = true ]; then
       if echo "$expected_md5  $filename" | md5sum -c - >/dev/null 2>&1; then
         echo "==> [$filename] geverifieerd via ${src_labels[$i]} (md5 $expected_md5 bevestigd)"
         return 0

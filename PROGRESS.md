@@ -272,10 +272,38 @@
   - Beschreven in BLUEPRINT.md onder "CI-strategie" als structurele
     aanpak, niet als eenmalige hack — bedoeld voor elke volgende
     fasegrens.
-- **Volgende stap:** dit alles committen/pushen en de run opnieuw
-  triggeren. Dit wordt tegelijk het eerste bewijs voor twee dingen: of de
-  verminderde parallelliteit de GCC-crash oplost, én of de bootstrap-cache
-  echt een cache-hit geeft en fase 1+6+7 overslaat (zou hier op de eerste
-  poging na deze wijziging nog een cache-MISS moeten zijn, omdat
-  `run-all.sh` zelf net veranderd is — de eerstvolgende ONGEWIJZIGDE
-  poging zou de hit moeten laten zien).
+- **Twee vervolgruns faalden — bleek bij het induiken (Anti-Patch-Loop:
+  eerst root cause zoeken, niet blind opnieuw proberen) allebei dezelfde
+  externe oorzaak, geen nieuwe hoofdstuk-8-bug.** Run 35442344495 (14m50s)
+  en 35443172523 (18m10s) liepen allebei stuk in `ch6-00-fetch-sources.sh`
+  op exact dezelfde plek als eerder: ncurses' officiële URL faalt (bekend),
+  en dit keer viel ook de Wayback Machine-fallback weg. Direct getest:
+  `web.archive.org` gaf letterlijk een "Internet Archive: Temporarily
+  Offline"-onderhoudspagina terug — een echte, wereldwijde storing, geen
+  bug in ons mechanisme (integendeel: het bewijst dat de
+  checksum-verplichting werkt — geen versie-afwijking geaccepteerd, ook
+  niet onder deze druk).
+  - Automatisch gewacht tot de Wayback CDX-API weer geldige JSON teruggaf,
+    daarna de run herhaald (35444169373) — **faalde opnieuw**, en de
+    coordinator vroeg terecht om eerst de echte logs van déze run te
+    induiken i.p.v. blind door te gaan.
+  - **Bevinding na het induiken:** deze run faalde helemaal niet in
+    hoofdstuk 8 (dat werd zelfs overgeslagen, status "-") — hij faalde
+    weer in dezelfde `ch6-00-fetch-sources.sh`-stap, weer op de
+    Wayback-poging (exact ~20s timeout, identieke foutmelding). Eigen
+    losse test daarna toonde dat de Wayback CDX-API alweer snel en correct
+    reageerde. Conclusie: het herstel van de storing was schokkerig
+    (meerdere korte periodes van "weer bereikbaar" afgewisseld met nog
+    niet stabiel), en onze automatische hersteldetectie ving een
+    vroege, niet-blijvende succespoging op vóórdat de dienst echt stabiel
+    was — dit is dus nog steeds hetzelfde externe Wayback-incident, geen
+    apart, nieuw probleem in de hoofdstuk-8-scripts.
+  - **Fix:** `fetch_verified()` deed voorheen maar één poging per bron.
+    Nu 3 pogingen per bron met 10s pauze ertussen, vóór de keten naar de
+    volgende bron gaat — vangt precies dit soort "bron is weer half terug"
+    scenario op zonder een oneindige retry te worden. Lokaal functioneel
+    getest (mock die pas op de 3e poging slaagt) — werkt correct.
+- **Volgende stap:** dit committen/pushen en de run herhalen. Nog steeds
+  eerste echt bewijs nodig voor: de `-j2`-fix (GCC-stap in hoofdstuk 8) en
+  de bootstrap-cache-hit (verwacht bij een run waar deze scripts zelf niet
+  wijzigen).
