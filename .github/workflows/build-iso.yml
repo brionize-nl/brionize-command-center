@@ -12,10 +12,11 @@ on:
   push:
     branches: [main]
     paths:
-      - "docker/Dockerfile.build"
-      - "scripts/01-toolchain/**"
-      - "scripts/02-base-system/**"
-      - "scripts/lib/**"
+      # Breed getriggerd op de hele scripts/-boom (i.p.v. elke submap los
+      # opnoemen) — een vergeten submap (zoals scripts/lib/** hiervoor)
+      # mag dit structureel niet meer kunnen missen.
+      - "docker/**"
+      - "scripts/**"
       - ".github/workflows/build-iso.yml"
 
 permissions:

@@ -109,6 +109,38 @@ telkens als losse onderbreking behandeld, maar is standaardgedrag van elke
    en escaleren** als een echt beslispunt (mogelijke versie-afwijking) — dit
    wordt nooit stilzwijgend doorgedrukt naar een andere versie.
 
+## Vast bouwpatroon per fase (vanaf het begin toepassen, niet pas na fouten)
+Hoofdstuk 8 kostte meerdere iteraties om deze lessen te leren. Fase 3
+(`03-blfs-desktop`) en fase 4 (`04-devstack-apps`) beginnen er **vanaf hun
+allereerste script** mee — dit is geen checklist om achteraf toe te passen
+als iets al misgaat, maar het standaard vertrekpunt:
+
+1. **Altijd `fetch_verified()`** (`scripts/lib/fetch-verified.sh`) voor elke
+   download, nooit losse `wget`/`curl`-logica per pakket. Zie
+   "Bronbeschikbaarheid & fallback-beleid" hierboven.
+2. **Checkpoints altijd als los tar-bestand cachen, nooit de ruwe map.**
+   Geleerde les uit hoofdstuk 8: `actions/cache` draait zelf altijd als de
+   onbevoorrechte runner-user en kan geen root-only/restrictieve bestanden
+   lezen die een fase bewust zo instelt (bv. `/root` op 0750). Patroon:
+   `sudo tar --zstd -cpf checkpoint.tar.zst -C <map> .` → chown terug naar de
+   runner-user → `actions/cache/save` op dat éne bestand. Terugzetten met
+   `sudo tar --zstd -xpf` (behoudt eigenaarschap/rechten correct).
+3. **Checkpoints ook BINNEN een zware fase, niet alleen op de fasegrens.**
+   Hoofdstuk 8 (~80 pakketten) had geen tussentijds checkpoint, waardoor
+   elke mislukte poging weer bij pakket 1 van die fase begon. Fase 3 (Xorg
+   alléén al ~40+ pakketten) en fase 4 splitsen zichzelf op in meerdere
+   sub-checkpoints (bv. per logisch blok van 10-20 pakketten), niet pas
+   achteraf wanneer blijkt dat één blok te groot is.
+4. **`-j2` als standaard `MAKEFLAGS`/`TESTSUITEFLAGS`**, niet `-j$(nproc)`.
+   Op de gedeelde GitHub Actions-runners bleek `-j$(nproc)` (4) GCC's
+   geheugenhongerige C++-bootstrap laten crashen zonder duidelijke
+   foutmelding (vermoedelijk een OOM-kill). Nieuwe fases beginnen met `-j2`
+   i.p.v. dit opnieuw tegen dezelfde limiet te ontdekken.
+5. **Workflow-trigger breed, niet per submap.** `on.push.paths` triggert nu
+   op `scripts/**` (i.p.v. elke submap losse te noemen) — het "een submap
+   vergeten toe te voegen"-probleem (`scripts/lib/**` ontbrak eerder) kan
+   zo structureel niet meer terugkomen.
+
 ## Security / Secrets (grondregel, niet-onderhandelbaar)
 - **Nooit hardcoded secrets, accounts of persoonlijke data in de repo** —
   ook niet tijdens de publieke periode.
