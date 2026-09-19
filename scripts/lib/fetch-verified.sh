@@ -74,6 +74,25 @@ _fv_try_debian_snapshot() {
   return 1
 }
 
+# Zelf-gehoste back-up (GitHub Release "build-deps" in deze repo) voor
+# bestanden die bewezen onbetrouwbaar bleken via alle bovenstaande bronnen —
+# elk hier vermeld bestand is vooraf handmatig gedownload en tegen de
+# officiële LFS-md5 geverifieerd vóórdat het hier werd geüpload (zie
+# PROGRESS.md voor het concrete geval: ncurses' officiële mirror is
+# permanent dood, en de Wayback Machine bleek specifiek vanuit GitHub
+# Actions-IP-reeksen onbetrouwbaar terwijl 'ie elders wel werkte). Dit is
+# een allerlaatste, door onszelf gecontroleerde bron — geen vervanging van
+# de officiële bron, alleen een stabielere fallback dan externe archieven.
+declare -A _FV_SELF_HOSTED=(
+  [ncurses-6.5-20250809.tgz]="https://github.com/brionize-nl/brionize-command-center/releases/download/build-deps/ncurses-6.5-20250809.tgz"
+)
+
+_fv_try_self_hosted() { # filename filename
+  local url="${_FV_SELF_HOSTED[$1]:-}"
+  [ -z "$url" ] && return 1
+  wget --no-verbose --timeout=30 --tries=2 -O "$2" "$url" >/dev/null 2>&1
+}
+
 fetch_verified() {
   local filename="$1" primary_url="$2" expected_md5="$3"
 
@@ -86,6 +105,12 @@ fetch_verified() {
   local -a src_labels=() src_funcs=() src_args=()
 
   src_labels+=("officiële URL");    src_funcs+=("_fv_try_direct");          src_args+=("$primary_url")
+
+  if [ -n "${_FV_SELF_HOSTED[$filename]:-}" ]; then
+    src_labels+=("eigen back-up (GitHub Release)")
+    src_funcs+=("_fv_try_self_hosted")
+    src_args+=("$filename")
+  fi
 
   if [[ "$primary_url" == https://ftp.gnu.org/gnu/* ]]; then
     src_labels+=("GNU-mirrornetwerk (ftpmirror.gnu.org)")
@@ -128,7 +153,7 @@ fetch_verified() {
     fi
   done
 
-  echo "FOUT: [$filename] via geen enkele bron (officieel, GNU-mirror, Wayback, Software Heritage, snapshot.debian.org) een kloppende checksum ($expected_md5) gekregen." >&2
+  echo "FOUT: [$filename] via geen enkele bron (officieel, eigen back-up, GNU-mirror, Wayback, Software Heritage, snapshot.debian.org) een kloppende checksum ($expected_md5) gekregen." >&2
   echo "Dit is een echt beslispunt (mogelijke versie-afwijking) — build stopt hier, geen automatische versie-bump." >&2
   return 1
 }

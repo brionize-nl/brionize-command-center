@@ -94,9 +94,16 @@ telkens als losse onderbreking behandeld, maar is standaardgedrag van elke
 `02-base-system`, en straks ook `03-blfs-desktop`/`04-devstack-apps`):
 
 1. Probeer eerst de officiële/gepinde URL uit de LFS wget-list.
-2. Bij falen: automatisch, in volgorde, GNU-mirrornetwerk (`ftpmirror.gnu.org`,
-   alleen relevant voor `ftp.gnu.org`-URL's), Wayback Machine (via de CDX-API,
-   niet de rate-gelimiteerde `available`-API), Software Heritage en
+2. Bij falen: automatisch, in volgorde, **eigen back-up** (GitHub Release
+   `build-deps` in deze repo — alleen voor bestanden die al eens bewezen
+   onbetrouwbaar bleken via alle onderstaande bronnen, per geval
+   toegevoegd aan `_FV_SELF_HOSTED` in `fetch-verified.sh`, vooraf
+   handmatig gedownload/geverifieerd), GNU-mirrornetwerk
+   (`ftpmirror.gnu.org`, alleen relevant voor `ftp.gnu.org`-URL's), Wayback
+   Machine (via de CDX-API, niet de rate-gelimiteerde `available`-API —
+   bleek in de praktijk vanuit GitHub Actions-IP-reeksen minder
+   betrouwbaar dan vanuit een gewone machine, vermoedelijk rate-limiting
+   van cloud-CI door Internet Archive), Software Heritage en
    snapshot.debian.org (beide laatste zijn best-effort — geen generieke
    bestandsnaam-lookup mogelijk zonder vooraf bekende hash/pakketversie, dus
    leveren in de praktijk zelden een hit, maar staan wel in de keten).
@@ -104,7 +111,10 @@ telkens als losse onderbreking behandeld, maar is standaardgedrag van elke
    ook — dit is de enige reden dat dit zonder mens/AI-tussenkomst mag: bij een
    match is het bewijsbaar exact hetzelfde bestand, ongeacht de bron.
 4. Bij match: doorgaan, met een duidelijke logregel (bestand, gebruikte bron,
-   bevestigde checksum) in de build-logs — geen onderbreking.
+   bevestigde checksum) in de build-logs — geen onderbreking. Elke bron
+   krijgt bovendien 3 pogingen met 10s pauze ertussen vóór de keten naar de
+   volgende bron gaat (een storing kan een schokkerige, niet-blijvende
+   herstelfase hebben).
 5. Bij falen van alle bronnen, of als nergens een checksum matcht: **stoppen
    en escaleren** als een echt beslispunt (mogelijke versie-afwijking) — dit
    wordt nooit stilzwijgend doorgedrukt naar een andere versie.
