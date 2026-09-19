@@ -22,4 +22,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         rsync \
     && rm -rf /var/lib/apt/lists/*
 
+# lfs-gebruiker in het image zelf bakken (i.p.v. iedere run opnieuw via
+# 00-prepare-host.sh) — nodig zodra een build in twee losse 'docker run'-
+# aanroepen wordt opgesplitst (bootstrap-cache-checkpoint vs. hoofdstuk 8),
+# zodat beide containers 'm meteen hebben zonder runtime-useradd.
+RUN groupadd lfs && useradd -s /bin/bash -g lfs -m -k /dev/null lfs
+
 WORKDIR /opt/lfs

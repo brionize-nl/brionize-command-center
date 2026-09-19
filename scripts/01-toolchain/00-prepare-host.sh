@@ -1,7 +1,9 @@
 #!/bin/bash
-# Draait als root. LFS-boek hoofdstuk 4.2 (directory layout) + 4.3
-# (lfs-gebruiker aanmaken). Faithfully vertaald naar een containeromgeving:
-# $LFS is hier een gewone map (geen apart partitie/mount nodig).
+# Draait als root. LFS-boek hoofdstuk 4.2 (directory layout). De
+# lfs-gebruiker (4.3) staat inmiddels al in docker/Dockerfile.build gebakken
+# (niet meer hier aangemaakt) — nodig zodra een build in twee losse
+# 'docker run'-aanroepen wordt opgesplitst (bootstrap-cache-checkpoint vs.
+# hoofdstuk 8), zodat elke container 'm meteen heeft.
 set -euo pipefail
 
 export LFS=/mnt/lfs
@@ -17,14 +19,6 @@ esac
 mkdir -pv "$LFS/tools"
 mkdir -pv "$LFS/sources"
 chmod -v a+wt "$LFS/sources"
-
-echo "==> lfs-gebruiker aanmaken"
-if ! getent group lfs >/dev/null; then
-  groupadd lfs
-fi
-if ! id -u lfs >/dev/null 2>&1; then
-  useradd -s /bin/bash -g lfs -m -k /dev/null lfs
-fi
 
 echo "==> Eigenaarschap zetten"
 chown -Rv lfs "$LFS"/{usr{,/*},var,etc,tools,sources}

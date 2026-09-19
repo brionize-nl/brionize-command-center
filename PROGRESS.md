@@ -233,7 +233,49 @@
     gecontroleerd — geen syntaxfouten. Top-level `run-all.sh` uitgebreid
     met de hoofdstuk-8-stap (bronnen ophalen buiten chroot, dan een eigen
     chroot-sessie voor alle 82 hoofdstuk-8-stappen).
-- **Volgende stap:** dit committen/pushen, de fase-1+2-run (nu incl.
-  hoofdstuk 8) triggeren via GitHub Actions, en het echte resultaat hier
-  vastleggen (groen, of het exacte pakket/probleem waar hij op vastloopt
-  — dit is de eerste keer dat dit ~80-pakketten-blok echt getest wordt).
+- **Eerste hoofdstuk-8-run: fase 1+6+7 opnieuw foutloos, hoofdstuk 8 stopt
+  abrupt tijdens GCC — root cause niet 100% zeker, wel gemitigeerd.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35439085621
+  (1u6m). `27-gcc.sh` (hoofdstuk 8.29, GCC native herbouwen) stopte met
+  "MISLUKT" middenin een reeks compiler-*waarschuwingen* (geen enkele
+  expliciete `error:`/`make: ***`/`No space left`/`Killed`-regel in onze
+  eigen logs) — een abrupte stop terwijl nog meerdere parallelle
+  compileertaken actief leken, wat past bij een externe kill (bv. de
+  Linux OOM-killer) i.p.v. een compilerfout die zichzelf meldt. Schijf was
+  geen probleem (110GB vrij). Kon dit niet 100% bevestigen (geen toegang
+  tot de dmesg/kernel-log van een al-afgelopen runner), maar GCC's
+  C++-bootstrap is bekend geheugenhongerig — `-j$(nproc)` (4 parallelle
+  taken op de standaard runner) is een reële kandidaat-oorzaak.
+  **Mitigatie:** `MAKEFLAGS`/`TESTSUITEFLAGS` in beide chroot-aanroepen
+  (hoofdstuk 7 en 8) van `-j$(nproc)` naar een vast, behoudend `-j2`
+  gezet. Kost wat bouwsnelheid, vermindert piekgeheugengebruik — een
+  bekende, veilige aanpak voor GCC-builds op resource-beperkte CI.
+- **Bootstrap-cache toegevoegd (op verzoek na Brionize's terechte
+  opmerking over verspilde herbouwtijd tijdens het itereren op hoofdstuk
+  8):**
+  - `docker/Dockerfile.build`: de `lfs`-gebruiker wordt nu in het image
+    zelf gebakken (niet meer runtime via `00-prepare-host.sh`) — nodig
+    zodra een build in twee losse `docker run`-aanroepen wordt
+    opgesplitst.
+  - `.github/workflows/build-iso.yml`: `actions/cache/restore` +
+    `actions/cache/save` rond fase 1 + hoofdstuk 6+7, met als key een hash
+    van alle scripts die dat deel bepalen. Cache-hit (hash ongewijzigd)
+    → die hele bouw overgeslagen, direct door naar hoofdstuk 8.
+    Cache-miss (hash gewijzigd of nog geen cache) → gewoon opnieuw bouwen,
+    met de reden duidelijk in de log. De cache wordt opgeslagen precies op
+    de fasegrens (vóór hoofdstuk 8 het volume verder aanpast), niet aan
+    het eind van de hele job.
+  - `scripts/02-base-system/run-all.sh`: nieuwe env-vars `SKIP_BOOTSTRAP`
+    (sla hoofdstuk 6 + hoofdstuk-7-pakketten over, mount/chroot draaien
+    wél altijd opnieuw) en `SKIP_CH8` (stop na hoofdstuk 7, voor het
+    cache-checkpoint).
+  - Beschreven in BLUEPRINT.md onder "CI-strategie" als structurele
+    aanpak, niet als eenmalige hack — bedoeld voor elke volgende
+    fasegrens.
+- **Volgende stap:** dit alles committen/pushen en de run opnieuw
+  triggeren. Dit wordt tegelijk het eerste bewijs voor twee dingen: of de
+  verminderde parallelliteit de GCC-crash oplost, én of de bootstrap-cache
+  echt een cache-hit geeft en fase 1+6+7 overslaat (zou hier op de eerste
+  poging na deze wijziging nog een cache-MISS moeten zijn, omdat
+  `run-all.sh` zelf net veranderd is — de eerstvolgende ONGEWIJZIGDE
+  poging zou de hit moeten laten zien).

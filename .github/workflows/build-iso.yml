@@ -45,19 +45,59 @@ jobs:
       - name: Docker-image bouwen
         run: docker build -t brionize-lfs-toolchain:latest -f docker/Dockerfile.build .
 
-      - name: Fase 1+2 (toolchain + temporary tools + volledig basissysteem) bouwen
-        # Fase 1 en fase 2 (hoofdstuk 6, 7 én 8) draaien bewust in ÉÉN
-        # docker-run-aanroep: de 'lfs'-gebruiker en $LFS-directorylayout die
-        # fase 1 aanmaakt leven in de containerlaag zelf (niet in het
-        # $LFS-volume), dus een nieuwe 'docker run' zou ze niet hergebruiken.
-        # --privileged is nodig voor de mount/chroot-stappen.
+      - name: Bootstrap-cache herstellen (indien beschikbaar)
+        # Sleutel = hash van alles dat fase 1 + hoofdstuk 6+7 bepaalt. Blijft
+        # de hash gelijk (scripts ongewijzigd), dan is er een cache-hit en
+        # slaan we die hele bouw over. Verandert er iets in die scripts, dan
+        # is de hash anders → cache-miss → gewoon opnieuw bouwen (nooit
+        # stilzwijgend een verouderd checkpoint hergebruiken). Zie
+        # BLUEPRINT.md "CI-strategie".
+        id: lfs-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/lfs
+          key: lfs-bootstrap-${{ hashFiles('docker/Dockerfile.build', 'scripts/01-toolchain/**', 'scripts/02-base-system/run-all.sh', 'scripts/02-base-system/ch6-*.sh', 'scripts/02-base-system/ch7-*.sh', 'scripts/02-base-system/inside-chroot/**', 'scripts/lib/**') }}
+
+      - name: Fase 1 + hoofdstuk 6+7 bouwen (of cache hergebruiken)
+        # --privileged nodig voor de mount/chroot-stappen.
         run: |
           mkdir -p "$RUNNER_TEMP/lfs"
+          if [ "${{ steps.lfs-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "==> Cache-hit: hash van fase 1 + hoofdstuk 6+7 ongewijzigd t.o.v. de laatst opgeslagen cache — hergebruikt, niet opnieuw gebouwd."
+          else
+            echo "==> Cache-miss: geen cache voor deze hash (nieuwe of gewijzigde scripts) — fase 1 + hoofdstuk 6+7 volledig bouwen."
+            docker run --rm --privileged \
+              -v "$RUNNER_TEMP/lfs:/mnt/lfs" \
+              -v "$GITHUB_WORKSPACE/scripts:/opt/lfs/scripts:ro" \
+              -e SKIP_CH8=true \
+              brionize-lfs-toolchain:latest \
+              bash -c "bash /opt/lfs/scripts/01-toolchain/run-all.sh && bash /opt/lfs/scripts/02-base-system/run-all.sh"
+          fi
+
+      - name: Bootstrap-cache opslaan (alleen bij cache-miss)
+        # Zelfde key-expressie als de restore-stap hierboven (met opzet
+        # herhaald i.p.v. een cache-actie-output te vertrouwen die we niet
+        # ter plekke kunnen verifiëren) — moet identiek zijn, anders wordt
+        # onder een andere key opgeslagen dan waarop later gezocht wordt.
+        if: steps.lfs-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/lfs
+          key: lfs-bootstrap-${{ hashFiles('docker/Dockerfile.build', 'scripts/01-toolchain/**', 'scripts/02-base-system/run-all.sh', 'scripts/02-base-system/ch6-*.sh', 'scripts/02-base-system/ch7-*.sh', 'scripts/02-base-system/inside-chroot/**', 'scripts/lib/**') }}
+
+      - name: Hoofdstuk 8 (volledig basissysteem) bouwen
+        # Losse 'docker run': de vorige stap sloeg zijn checkpoint al op
+        # (of gebruikte 'm al) vóórdat hoofdstuk 8 het $LFS-volume verder
+        # aanpast. SKIP_BOOTSTRAP=true slaat hoofdstuk 6/7-pakketten over
+        # (al aanwezig, uit de vorige stap), maar mount/chroot draaien hier
+        # altijd opnieuw (container-lokaal, niet cachebaar).
+        run: |
           docker run --rm --privileged \
             -v "$RUNNER_TEMP/lfs:/mnt/lfs" \
             -v "$GITHUB_WORKSPACE/scripts:/opt/lfs/scripts:ro" \
+            -e SKIP_BOOTSTRAP=true \
             brionize-lfs-toolchain:latest \
-            bash -c "bash /opt/lfs/scripts/01-toolchain/run-all.sh && bash /opt/lfs/scripts/02-base-system/run-all.sh"
+            bash -c "bash /opt/lfs/scripts/02-base-system/run-all.sh"
 
       - name: Logs uploaden (ook bij falen)
         if: always()

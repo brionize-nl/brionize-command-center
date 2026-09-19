@@ -57,6 +57,32 @@ interne schijf: een 24/7 "Citizen Developer & AI Command Center".
   desnoods op Brionize's eigen Asus-machine wanneer een CI-job vastloopt op
   tijd of schijfruimte. Geen aparte scripts nodig — één bouwpad, twee
   omgevingen.
+- **Bootstrap-cache (structurele verbetering, geen eenmalige hack):** elke
+  push herbouwde eerst fase 1 + hoofdstuk 6+7 (~1u aan al bewezen werk)
+  vóórdat het nieuwe/gewijzigde deel (bv. hoofdstuk 8) begon — bij het
+  itereren op hoofdstuk 8 kostte dat meerdere keren een volledige,
+  overbodige herbouw. Opgelost met `actions/cache/restore` +
+  `actions/cache/save` in `.github/workflows/build-iso.yml`, met als
+  cache-key een hash van alles dat fase 1 + hoofdstuk 6+7 bepaalt
+  (`docker/Dockerfile.build`, `scripts/01-toolchain/**`,
+  `scripts/02-base-system/run-all.sh` + `ch6-*.sh` + `ch7-*.sh` +
+  `inside-chroot/**`, `scripts/lib/**`):
+  - **Hash ongewijzigd → cache-hit:** die hele bouw wordt overgeslagen, de
+    workflow gaat direct door met alleen het nieuwe/gewijzigde deel
+    (momenteel hoofdstuk 8). Duidelijk gelogd in de workflow-run.
+  - **Hash gewijzigd (of geen cache) → cache-miss:** fase 1 + hoofdstuk 6+7
+    bouwen gewoon opnieuw vanaf source, met de reden in de log — nooit
+    stilzwijgend een verouderd checkpoint hergebruiken als die scripts
+    zelf zijn aangepast.
+  - De cache wordt als checkpoint opgeslagen precies op de fasegrens (na
+    hoofdstuk 7, vóór hoofdstuk 8 het `$LFS`-volume verder aanpast) — twee
+    losse `docker run`-aanroepen i.p.v. één, met de `lfs`-gebruiker
+    inmiddels in `docker/Dockerfile.build` zelf gebakken (niet meer
+    runtime aangemaakt) zodat beide containers 'm meteen hebben.
+    `scripts/02-base-system/run-all.sh` ondersteunt dit via de env-vars
+    `SKIP_BOOTSTRAP` en `SKIP_CH8`.
+  - Dit patroon is bedoeld om herbruikt te worden voor elke volgende
+    fasegrens (bv. straks tussen hoofdstuk 8 en fase 3), niet alleen hier.
 
 ## Bronbeschikbaarheid & fallback-beleid (vaste bouw-aanpak)
 LFS-mirrors — vooral dated snapshots zoals ncurses' `current/`-map — rollen
