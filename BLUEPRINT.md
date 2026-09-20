@@ -82,7 +82,10 @@ interne schijf: een 24/7 "Citizen Developer & AI Command Center".
     `scripts/02-base-system/run-all.sh` ondersteunt dit via de env-vars
     `SKIP_BOOTSTRAP` en `SKIP_CH8`.
   - Dit patroon is bedoeld om herbruikt te worden voor elke volgende
-    fasegrens (bv. straks tussen hoofdstuk 8 en fase 3), niet alleen hier.
+    fasegrens, niet alleen hier — inmiddels ook toegepast tussen hoofdstuk
+    8 en fase 3 ("ch8-complete"-cache, zelfde opzet, tweede cache-laag in
+    `.github/workflows/build-iso.yml`) en bedoeld voor elke volgende
+    sub-fasegrens binnen fase 3/4 zelf (bv. tussen 03a en 03b).
 
 ## Bronbeschikbaarheid & fallback-beleid (vaste bouw-aanpak)
 LFS-mirrors — vooral dated snapshots zoals ncurses' `current/`-map — rollen

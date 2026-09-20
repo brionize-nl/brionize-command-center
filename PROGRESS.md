@@ -419,3 +419,45 @@
 - **Volgende stap:** hoofdstuk 10 (generieke kernel + GRUB-package) —
   het laatste stukje van fase 2 volgens BLUEPRINT.md — of meteen door naar
   fase 3, ter beoordeling/keuze van Brionize.
+
+## 2026-09-20
+- **Coordinator: fase 3 starten, volgens het net vastgelegde "Vast
+  bouwpatroon per fase" — checkpoints vanaf de eerste stap, niet pas
+  achteraf.**
+- **Checkpoint-architectuur uitgebreid:** een TWEEDE cache-laag toegevoegd
+  aan `.github/workflows/build-iso.yml`, "ch8-complete" (fase 1 + hoofdstuk
+  6+7+8 samen, ~1u bouwtijd). Zonder dit zou elke fase-3-iteratie hoofdstuk
+  8 opnieuw moeten bouwen — exact de verspilling die bij hoofdstuk 8 zelf
+  al pijnlijk bleek. Cascade: eerst de ch8-complete-cache proberen (hit =
+  alles overslaan tot en met hoofdstuk 8), anders de bestaande
+  bootstrap-cache proberen, anders alles vanaf fase 1 bouwen — na
+  hoofdstuk 8 wordt de ch8-complete-cache opgeslagen voor de volgende
+  keer. Workflow hernoemd naar "fase 1+2+3", artifact naar
+  `lfs-base-system-latest`.
+- **Fase 3a (Xorg-basisbibliotheken + server) geschreven — nog niet
+  gevalideerd.** `scripts/03-blfs-desktop/` met eigen `run-all.sh`
+  (SKIP_XORG-vlag vanaf de eerste versie, ook al is er nu nog maar één
+  sub-fase — consistent met "checkpoints per sub-fase vanaf het begin").
+  52 pakketten, dit keer ZELF geschreven i.p.v. via Codex gedelegeerd: het
+  boek bleek voor de 32 "Xorg Libraries" (x7lib.html) en 9 "Xorg Fonts"
+  (x7font.html) al een generieke lus + uitzonderingen-`case`-statement te
+  gebruiken (letterlijk overgenomen, ruwe HTML gecontroleerd, geen
+  samenvattingsfout dit keer), wat het aantal losse scripts drastisch
+  terugbracht.
+  - **Bewuste keuze, met onderbouwing uit het boek zelf:** `XORG_PREFIX=/usr`
+    ("The BLFS editors recommend using the /usr prefix") — single-tree
+    systeem, geen los `/usr/X11R6`. Daardoor zijn een aantal
+    boek-compatibiliteitssymlinks (voor een AFWIJKEND prefix) bewust
+    weggelaten — die zouden bij `/usr` zelf-verwijzend zijn.
+  - **Bewuste afwijking bij Xorg-Server:** `-D glamor=false` en
+    `-D systemd_logind=false` (i.p.v. het boek's `true`/`true`) — glamor
+    vereist libepoxy+Mesa (bewust nog niet meegenomen, zware losse stap),
+    systemd_logind vereist volledige systemd/logind (hoofdstuk 8 bouwde
+    alleen udev). Resultaat: basis/onversnelde X die op elke hardware
+    zonder GPU-driver-afhankelijkheid moet werken — past bij het
+    generieke-hardware-doel uit BLUEPRINT.md.
+  - Alle 15 nieuwe bestanden met `bash -n` gecontroleerd, geen
+    syntaxfouten.
+- **Volgende stap:** dit committen/pushen en de eerste fase-3-run
+  triggeren via GitHub Actions — dit is de eerste keer dat 03a echt
+  getest wordt.
