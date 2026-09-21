@@ -20,6 +20,10 @@ declare -A URLS=(
   [libxcb-1.17.0.tar.xz]="https://xorg.freedesktop.org/archive/individual/lib/libxcb-1.17.0.tar.xz"
   [xcb-util-0.4.1.tar.xz]="https://xcb.freedesktop.org/dist/xcb-util-0.4.1.tar.xz"
 
+  # Freetype — vereist door libXft (in de x7lib-lus hieronder); hoorde
+  # oorspronkelijk bij een latere GTK-stack-sub-fase, maar is al hier nodig.
+  [freetype-2.13.3.tar.xz]="https://downloads.sourceforge.net/freetype/freetype-2.13.3.tar.xz"
+
   # x7lib.html — 32 Xorg-bibliotheken (generieke lus, zie 08-x7lib-loop.sh)
   [xtrans-1.6.0.tar.xz]="https://www.x.org/pub/individual/lib/xtrans-1.6.0.tar.xz"
   [libX11-1.8.12.tar.xz]="https://www.x.org/pub/individual/lib/libX11-1.8.12.tar.xz"
@@ -80,6 +84,7 @@ declare -A MD5=(
   [xcb-proto-1.17.0.tar.xz]="c415553d2ee1a8cea43c3234a079b53f"
   [libxcb-1.17.0.tar.xz]="96565523e9f9b701fcb35d31f1d4086e"
   [xcb-util-0.4.1.tar.xz]="34d749eab0fd0ffd519ac64798d79847"
+  [freetype-2.13.3.tar.xz]="f3b4432c4212064c00500e1ad63fbc64"
 
   [xtrans-1.6.0.tar.xz]="6ad67d4858814ac24e618b8072900664"
   [libX11-1.8.12.tar.xz]="146d770e564812e00f97e0cbdce632b7"

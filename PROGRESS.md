@@ -458,6 +458,28 @@
     generieke-hardware-doel uit BLUEPRINT.md.
   - Alle 15 nieuwe bestanden met `bash -n` gecontroleerd, geen
     syntaxfouten.
-- **Volgende stap:** dit committen/pushen en de eerste fase-3-run
-  triggeren via GitHub Actions — dit is de eerste keer dat 03a echt
-  getest wordt.
+- **Eerste fase-3-run: de tweede cache-laag (ch8-complete) werkt bewezen,
+  03a kwam tot pakket 32 van de 52 voordat een echte, verwachte
+  ontbrekende-dependency-fout opdook.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35527115578
+  (1u32m11s): bootstrap-cache HIT (overgeslagen), ch8-complete-cache MISS
+  (eerste keer, dus terecht) → hoofdstuk 8 gewoon herbouwd (~52 min) → de
+  nieuwe ch8-complete-cache succesvol opgeslagen (geen permissieprobleem
+  dit keer — dezelfde tar-aanpak als de bootstrap-cache werkt hier ook
+  meteen goed). Fase 3a: pakketten 01-07 (proto/util-laag) slaagden
+  allemaal snel, toen `08-x7lib-loop.sh` (de 32-pakketten-lus) faalde op:
+  ```
+  configure: error: You must have freetype installed; see http://www.freetype.org/
+  ```
+  - **Root cause:** `libXft` (onderdeel van de x7lib-lus) heeft FreeType
+    nodig — die had ik abusievelijk pas bij een latere GTK-stack-sub-fase
+    ingepland, terwijl de x7lib-lus 'm nu al nodig heeft.
+  - **Fix:** Freetype-2.13.3 toegevoegd als `07a-freetype.sh` (BLFS 12.4,
+    letterlijk van de officiële pagina — die bleek trouwens niet op het
+    voor de hand liggende pad te staan: `general/freetype2.html`, niet
+    `general/freetype.html`), vóór de x7lib-lus in de stappenvolgorde.
+    Geen `freetype-doc`-pakket meegenomen (optioneel, niet nodig om te
+    bouwen/linken).
+- **Volgende stap:** dit committen/pushen en herhalen — dit zou nu
+  voorbij de x7lib-lus moeten komen (ch8-complete-cache is nu een hit,
+  dus dit kost geen ~52 minuten hoofdstuk-8-hertijd meer).
