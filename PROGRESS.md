@@ -773,6 +773,22 @@
     "Recommended" wayland-stack (Wayland, wayland-protocols,
     libxkbcommon) al aanwezig is — bij ons bewust niet (X11-only-doel).
   - **Fix:** `-D wayland_backend=false` toegevoegd aan `27-gtk3.sh`.
+- **wayland_backend-fix bevestigd: xkbcommon-fout weg, GTK3 komt nu
+  voorbij de vorige blokkade.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35788202760
+  (job 106950064551): alles t/m libepoxy weer foutloos (tweede keer op
+  rij — bevestigt dat 01-26 stabiel zijn). GTK3 faalt nu op een NIEUWE,
+  aparte doc-tool-fout, verder in de configure:
+  ```
+  ../docs/reference/gtk/meson.build:488:2: ERROR: Problem encountered: No xsltproc found, but man pages were explicitly enabled
+  ```
+  - **Root cause:** GTK3's man-pages gebruiken `xsltproc` (uit
+    libxslt) — een ANDER doc-toolchain-pakket dan rst2man/docutils
+    (waar GLib en gdk-pixbuf tegenaan liepen). Nog niet gebouwd (alleen
+    "Optional"/"Recommended" voor de meeste pagina's).
+  - **Fix:** `-D man=false` i.p.v. `man=true` — geen man-pages nodig
+    voor een werkend systeem, geen nieuw pakket (libxslt) erbij nodig
+    voor deze ene, niet-functionele feature.
 - **Volgende stap:** dit committen/pushen en herhalen. Als dit slaagt is
   fase 3b (27 pakketten, GTK3-supporting-stack compleet inclusief het
   zware LLVM/Mesa-duo) VOLLEDIG groen — de laatste horde vóór fase 3c

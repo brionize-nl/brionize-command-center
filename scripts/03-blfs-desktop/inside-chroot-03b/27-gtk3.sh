@@ -12,6 +12,13 @@
 # geen wayland/wayland-protocols/libxkbcommon gebouwd hebben (X11-only-
 # doel). Het boek's eigen voorbeeldcommando gaat er stilzwijgend van uit
 # dat je de "Recommended" wayland-stack al hebt; wij niet.
+#
+# '-D man=false' (i.p.v. het boek's 'man=true') — GTK3's man-pages
+# gebruiken xsltproc (uit libxslt), NIET rst2man/docutils zoals GLib en
+# gdk-pixbuf: "No xsltproc found, but man pages were explicitly
+# enabled" (docs/reference/gtk/meson.build:488). Weer een ANDER
+# doc-toolchain-pakket niet gebouwd (bewust) — geen man-pages nodig
+# voor een werkend systeem.
 set -euo pipefail
 cd /sources
 tar -xf gtk-3.24.50.tar.xz
@@ -24,7 +31,7 @@ meson setup ..                  \
     --prefix=/usr             \
     --buildtype=release       \
     -D wayland_backend=false  \
-    -D man=true               \
+    -D man=false              \
     -D broadway_backend=true
 ninja
 ninja install
