@@ -746,9 +746,34 @@
     al bewezen losse `-D man-pages=disabled`/`-D man=false`-fixes bij
     GLib en gdk-pixbuf blijven staan (geen reden om te herstellen, ze
     werken en zijn nu gewoon overbodig-maar-onschadelijk).
-- **Volgende stap:** dit committen/pushen en herhalen. Verwacht nu
-  opnieuw een xorg-complete-cache-HIT, gevolgd door verder in 03b —
-  gdk-pixbuf, at-spi2-core, dan het zware LLVM/Mesa/libepoxy/GTK3-
-  slotstuk. Root-cause-discipline blijft hetzelfde. Zodra 03b groen is:
-  fase 3c (XFCE-core, 17 pakketten, volgorde al vastgelegd in
-  BLUEPRINT.md) scripten.
+- **docutils-fix bevestigd: GEEN enkele rst2man-fout meer in de rest van
+  03b — de root-cause-aanpak werkte.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35779056041
+  (job 106919539200): gdk-pixbuf en at-spi2-core allebei foutloos groen
+  (geen losse man/doc-fix meer nodig geweest). Daarna het zware
+  slotstuk: **LLVM slaagde** (20:40 → 21:34, ~54 minuten — met de
+  bewust minimale configuratie (geen Clang, geen Compiler-RT, geen
+  tests, alleen X86-target) fors sneller dan het boek's eigen
+  13-SBU-schatting met de volledige set zou impliceren), **Mesa
+  (llvmpipe-only) slaagde**, **libepoxy slaagde**. Alleen het allerlaatste
+  pakket van de HELE fase-3b-keten, GTK3 zelf, faalde nog:
+  ```
+  ../meson.build:441:17: ERROR: Dependency "xkbcommon" not found, tried pkgconfig and cmake
+  ```
+  - **Root cause, gevonden door GTK3's eigen bron te downloaden en
+    meson.build/meson_options.txt te lezen:** `wayland_backend` is bij
+    GTK3 een GEWONE boolean-optie die op Linux standaard op `true`
+    staat (géén 'auto'-detectie op basis van aanwezige
+    wayland-bibliotheken!). Regel 441:
+    `xkbdep = dependency('xkbcommon', version: xkbcommon_req, required:
+    wayland_enabled)` — maakt xkbcommon dus verplicht zodra
+    wayland_enabled true is, wat bij ons altijd het geval was omdat we
+    de vlag nooit expliciet uitzetten. Het boek's eigen voorbeeldcommando
+    zet deze vlag nooit, omdat het er stilzwijgend van uitgaat dat de
+    "Recommended" wayland-stack (Wayland, wayland-protocols,
+    libxkbcommon) al aanwezig is — bij ons bewust niet (X11-only-doel).
+  - **Fix:** `-D wayland_backend=false` toegevoegd aan `27-gtk3.sh`.
+- **Volgende stap:** dit committen/pushen en herhalen. Als dit slaagt is
+  fase 3b (27 pakketten, GTK3-supporting-stack compleet inclusief het
+  zware LLVM/Mesa-duo) VOLLEDIG groen — de laatste horde vóór fase 3c
+  (XFCE-core, 17 pakketten, volgorde al vastgelegd in BLUEPRINT.md).
