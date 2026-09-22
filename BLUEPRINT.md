@@ -273,3 +273,30 @@ beurt als deze BLUEPRINT-update.
   - Git-commit-identiteit voor dit project lokaal gezet op
     `Brionize <brionize.nl@gmail.com>` (afwijkend van de globale
     git-config, die op een ander account stond).
+- **2026-09-22 — Mesa-vraagstuk (GTK3/XFCE-laag) opgelost: Mesa MET, maar
+  alleen llvmpipe (software-rendering).** Zie "Dependency-audit fase
+  3b/3c" hierboven voor de volledige onderbouwing (libepoxy → Mesa is een
+  harde, niet te omzeilen GTK3-afhankelijkheid). Voorgelegd aan Brionize
+  als een echt beslispunt; Brionize gaf expliciet mandaat aan de AI om de
+  knoop door te hakken ("ik vertrouw op jou keuze... zolang alles straks
+  maar werkt en niet corrupt is"). Gekozen aanpak, met onderbouwing:
+  - Mesa-25.1.8 bouwen met `-D gallium-drivers=llvmpipe` (alleen de
+    CPU-software-rasterizer, geen hardware-GPU-vendor-drivers) i.p.v. het
+    boek's standaard `auto` (bouwt ALLE drivers voor alle GPU-merken).
+    Houdt de oorspronkelijke "generieke hardware, geen
+    GPU-driver-afhankelijkheid"-doelstelling overeind voor de
+    GTK3/XFCE-laag, tegen een kleinere bouw-/tijdsimpact dan de volledige
+    driver-set.
+  - `-D platforms=x11` (geen wayland — XFCE gebruikt hier X11, dus de
+    wayland-protocols-afhankelijkheidsketen is overbodig).
+  - `-D vulkan-drivers=` (leeg — geen Vulkan nodig voor een
+    software-only, X11-only desktop).
+  - xorg-server's eigen `-D glamor=false -D glx=false` (eerder al bewezen
+    in CI) blijft ONGEWIJZIGD — Mesa komt er via GTK3/libepoxy bij, niet
+    om alsnog GPU-versnelde Xorg-compositing te activeren. Twee losse,
+    bewuste keuzes die elkaar niet hoeven te raken.
+  - Vereist zelf nog LLVM-20.1.8 (nodig voor llvmpipe specifiek, boek
+    noemt dit als "Recommended" maar is voor ons effectief verplicht),
+    libdrm-2.4.125, en de Python-modules Mako en PyYAML (installatiepad
+    nog niet exact uitgezocht — vermoedelijk `pip3 install`, nog te
+    bevestigen bij het schrijven van de daadwerkelijke Mesa-bouwscripts).
