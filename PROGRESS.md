@@ -656,11 +656,38 @@
   fase-3-poging: freetype, fontconfig, mkfontscale, xorg-server
   glx/secure-rpc, libdrm — stuk voor stuk gevonden via de echte
   configure-/build-foutmelding, nooit gegokt.
-- **Volgende stap:** de nieuwe sub-fase 03b (Mesa llvmpipe-only + de
-  GTK3-supporting-stack: at-spi2-core, gdk-pixbuf, libepoxy, Pango,
-  GLib+GObject-Introspection, Cairo, harfbuzz, fribidi, plus Mesa's
-  eigen LLVM/libdrm(al aanwezig)/Mako/PyYAML-vereisten) scripten, met
-  dezelfde audit-eerst-discipline als bij het XFCE-core-onderzoek
-  hierboven — niet meer per CI-run ontdekken. Eigen SKIP_-vlag en
-  vierde cache-laag (`lfs-mesa-complete-*` oid.) volgens hetzelfde
-  patroon vanaf het eerste script.
+- **Sub-fase 03b volledig gescript: 27 pakketten, audit-eerst.** Op
+  coordinator-verzoek eerst de VOLLEDIGE bouwvolgorde tegen de officiële
+  BLFS-pagina's nagelopen (zie BLUEPRINT.md "Fase 3b — GTK3-supporting-
+  stack: volledige bouwvolgorde") vóórdat er één script geschreven werd
+  — inclusief twee niet-voor-de-hand-liggende circulaire
+  bootstrap-ketens die het boek zelf documenteert: (1) GLib in drie
+  stappen (introspectie uit → GObject-Introspection bouwen tegen die
+  GLib → GLib herbouwen met introspectie aan), en (2) FreeType/
+  Fontconfig herbouwen NA HarfBuzz voor volwaardige tekst-shaping-
+  ondersteuning (Pango's eigen Required-regel: "Fontconfig must be
+  built with FreeType using HarfBuzz").
+  - Elke tarball-extractiemap-naam is vóór het schrijven van de
+    scripts geverifieerd door de eerste ~3MB van elke tarball te
+    downloaden en de top-level map met `tar -t...f` te controleren
+    (i.p.v. aan te nemen) — dit ving één echte fout: GTK3's tarball
+    heet `gtk-3.24.50.tar.xz` maar oudere BLFS-versies pakten dit uit
+    naar `gtk+-3.24.50/` (met een plus); BLFS 12.4 blijkt de map zonder
+    plus te noemen (`gtk-3.24.50/`) — zonder deze check had dit script
+    pas in CI gefaald.
+  - **LLVM (nodig voor Mesa's llvmpipe-driver) is verreweg het zwaarste
+    pakket** — boek schat 13 SBU / 4.7 GB. Bewust MINIMAAL gebouwd:
+    geen Clang, geen Compiler-RT, geen testsuite,
+    `LLVM_TARGETS_TO_BUILD="X86"` i.p.v. het boek's `"host;AMDGPU"`.
+    Reken op een aanzienlijk langere CI-tijd voor deze ene stap dan al
+    het andere in 03b (en mogelijk 03a) samen.
+  - Vierde CI-cache-laag (`lfs-gtk3-complete-*`) toegevoegd, zelfde
+    gelaagde patroon als bootstrap→ch8-complete: 03a en 03b zijn nu
+    losse, apart gecachete docker-run-stappen binnen dezelfde job
+    (`SKIP_GTK3_STACK=true` resp. `SKIP_XORG=true`), zodat een latere
+    fout in fase 3c (XFCE-core) niet ook 03a of 03b hoeft te herbouwen.
+- **Volgende stap:** dit committen/pushen en de eerste 03b-run afwachten
+  — dit wordt de langste CI-run tot nu toe (LLVM alleen al). Root-cause-
+  discipline blijft hetzelfde: bij een fout de echte log induiken, geen
+  fixes gokken. Zodra 03b groen is: fase 3c (XFCE-core, 17 pakketten,
+  volgorde al vastgelegd in BLUEPRINT.md) scripten.

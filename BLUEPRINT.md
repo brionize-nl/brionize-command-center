@@ -148,8 +148,12 @@ als iets al misgaat, maar het standaard vertrekpunt:
    `lfs-ch8-complete-*`) op de grens ná 03a (Xorg-basisbibliotheken +
    server), zodat een fout dieper in fase 3 (XFCE-kern, apps-laag) niet
    ook 03a opnieuw laat bouwen. Zelfde tar-bestand-i.p.v.-ruwe-map-patroon
-   als de eerdere twee lagen (zie punt 2). Vervolg-sub-fasen (GTK3/glib-
-   stack, XFCE-core, apps-laag) krijgen op dezelfde manier hun eigen laag
+   als de eerdere twee lagen (zie punt 2). Inmiddels ook toegepast op de
+   grens ná 03b (GTK3-supporting-stack, `lfs-gtk3-complete-*`) — 03a en
+   03b zijn losse, apart gecachete `docker run`-stappen binnen dezelfde
+   workflow-job (`SKIP_GTK3_STACK=true` resp. `SKIP_XORG=true`), zelfde
+   gelaagde patroon als bootstrap→ch8-complete. Vervolg-sub-fasen
+   (XFCE-core, apps-laag) krijgen op dezelfde manier hun eigen laag
    zodra ze bestaan, niet pas achteraf.
 4. **`-j4` als standaard `MAKEFLAGS`/`TESTSUITEFLAGS`** (de CI-runner heeft 4
    cores). Was tijdelijk op `-j2` gezet na een onverklaarde GCC-crash die
