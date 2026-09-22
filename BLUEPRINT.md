@@ -240,6 +240,96 @@ Boundary) niet zelfstandig door de AI genomen wordt, ook niet onder
 Autopilot. Aan Brionize voorgelegd via een aparte vraag in dezelfde
 beurt als deze BLUEPRINT-update.
 
+### Fase 3b — GTK3-supporting-stack: volledige bouwvolgorde (audit, 2026-09-22)
+Alle 27 pakketten hieronder zijn tegen hun eigen officiële BLFS 12.4-
+pagina nagelopen (URL/MD5/Required-lijst letterlijk opgezocht, niet uit
+het geheugen) vóórdat er één script geschreven werd — zelfde discipline
+als bij 03a hierboven. Volgorde is bepalend en volgt uit de onderlinge
+Required-koppelingen, inclusief een paar niet-voor-de-hand-liggende
+CIRCULAIRE afhankelijkheden die het boek zelf expliciet benoemt:
+
+1. **pcre2-10.45** — los, door GLib "Recommended" aangeraden (anders
+   downloadt GLib 'm zelf tijdens de build — niet gewenst, alle
+   downloads via `fetch_verified()`).
+2. **libpng-1.6.50** — los, nodig voor Cairo + gdk-pixbuf.
+3. **libyaml (yaml-0.2.5)** — los, nodig voor de PyYAML-Python-module.
+4. **Mako-1.3.10** (Python-module, `pip3 wheel`+`pip3 install`-patroon
+   uit BLFS' algemene "Python Modules"-pagina) — nodig voor Mesa.
+5. **Cython-3.1.3** (Python-module) — nodig voor PyYAML.
+6. **PyYAML-6.0.2** (Python-module, Required: Cython + libyaml) — nodig
+   voor Mesa.
+7. **GLib-2.84.4, stap 1/3** — bouwen met `-D introspection=disabled`,
+   installeren.
+8. **GObject-Introspection-1.84.0** — bouwen tegen de zojuist
+   geïnstalleerde GLib, installeren. (Dit is GEEN eigen BLFS-pagina; de
+   instructies staan letterlijk IN GLib's eigen paginatekst als
+   "Additional Downloads".)
+9. **GLib-2.84.4, stap 2/3** — `meson configure -D introspection=enabled`
+   in dezelfde build-map, herbouwen, opnieuw installeren. Reden voor
+   deze twee-staps-bootstrap (letterlijk uit het boek): GObject-
+   Introspection zelf heeft GLib nodig om te bouwen, maar GLib's eigen
+   introspectiedata heeft GObject-Introspection nodig om te genereren.
+10. **libxml2-2.14.5** — los, nodig voor shared-mime-info.
+11. **shared-mime-info-2.4** (Required: GLib + libxml2) — nodig voor
+    gdk-pixbuf.
+12. **dbus-1.16.2** — los, nodig voor at-spi2-core.
+13. **gsettings-desktop-schemas-48.0** (Required: GLib) — runtime-dep
+    van at-spi2-core.
+14. **HarfBuzz-11.4.1** (Recommended: GLib, FreeType — FreeType komt uit
+    03a, nog zonder harfbuzz-ondersteuning; dat is voor deze eerste
+    HarfBuzz-build geen probleem).
+15. **FreeType-2.13.3 — HERBOUW** (boek, letterlijk bij HarfBuzz's eigen
+    Recommended-regel: "after harfbuzz is installed, reinstall
+    freetype"). FreeType's configure detecteert HarfBuzz nu automatisch
+    via pkgconfig en voegt subpixel-hinting-ondersteuning toe.
+16. **Fontconfig-2.17.1 — HERBOUW** (boek, letterlijk bij Pango's eigen
+    Required-regel: "must be built with FreeType using HarfBuzz").
+    Linkt nu tegen de zojuist herbouwde, HarfBuzz-bewuste FreeType.
+17. **FriBidi-1.0.16** — los (geen dependencies), nodig voor Pango.
+18. **Cairo-1.18.4** (Required: libpng, Pixman-uit-03a; Recommended:
+    Fontconfig-herbouwd, GLib, Xorg Libraries-uit-03a). Boek-note:
+    circulaire relatie met HarfBuzz ("indien Cairo vóór HarfBuzz gebouwd
+    wordt, Cairo herbouwen na HarfBuzz om Pango te kunnen bouwen") — bij
+    ons al vanzelf goed omdat HarfBuzz (stap 14) al vóór Cairo gebouwd
+    wordt, dus geen aparte Cairo-herbouw nodig.
+19. **Pango-1.56.4** (Required: Fontconfig-herbouwd, FriBidi, GLib;
+    Recommended: Cairo-gebouwd-na-HarfBuzz — voldaan door de volgorde
+    hierboven).
+20. **CMake-4.1.0** — los (geen harde dependencies buiten wat we al
+    hebben), nodig voor libjpeg-turbo én later LLVM.
+21. **libjpeg-turbo-3.0.1** (Required: CMake) — nodig voor gdk-pixbuf.
+22. **gdk-pixbuf-2.42.12** (Required: GLib, libjpeg-turbo, libpng,
+    shared-mime-info).
+23. **At-Spi2 Core-2.56.4** (Required: dbus, GLib, Xorg Libraries;
+    Runtime: gsettings-desktop-schemas).
+24. **LLVM-20.1.8** (Required: CMake) — **bewust MINIMAAL**: alleen de
+    kernbibliotheken die llvmpipe nodig heeft, GEEN Clang (boek: "Recommended
+    Download", niet nodig voor Mesa), GEEN Compiler-RT (Optional), GEEN
+    testsuite. Dit is verreweg het zwaarste pakket in heel fase 3b (boek
+    schat 13 SBU met parallelism=8, 4.7 GB schijfruimte) — reken op een
+    aanzienlijk langere CI-tijd voor deze ene stap dan al het andere in
+    03b samen. `CMAKE_BUILD_TYPE=Release` en een beperkte
+    `LLVM_TARGETS_TO_BUILD=X86` houden dit zo klein als voor llvmpipe
+    nodig is.
+25. **Mesa-25.1.8** (Required: Xorg Libraries-uit-03a, libdrm-uit-03a,
+    Mako, PyYAML; effectief vereist: LLVM voor llvmpipe specifiek) — zie
+    Beslislog (2026-09-22): `-D gallium-drivers=llvmpipe -D
+    platforms=x11 -D vulkan-drivers=` (leeg).
+26. **libepoxy-1.5.10** (Required: Mesa).
+27. **GTK3-3.24.50** (Required: at-spi2-core, gdk-pixbuf, libepoxy,
+    Pango; effectief vereist: GLib-met-introspectie).
+
+Niet meegenomen (bewust, "Recommended"/"Optional" en niet nodig om te
+bouwen): ICU, Graphite2, Wayland/wayland-protocols/libxkbcommon
+(X11-only-doel), adwaita-icon-theme (runtime-thema, geen bouwblokkering),
+libtiff/librsvg (gdk-pixbuf runtime-loaders), NASM/yasm (libjpeg-turbo
+optimalisatie).
+
+Vierde CI-cache-laag (`lfs-gtk3-complete-*`) volgens hetzelfde patroon
+als de eerdere drie, op de grens ná 03b — zodat een latere fout in
+XFCE-core (fase 3c) niet ook deze hele, zware stack (met name LLVM)
+opnieuw laat bouwen.
+
 ## Security / Secrets (grondregel, niet-onderhandelbaar)
 - **Nooit hardcoded secrets, accounts of persoonlijke data in de repo** —
   ook niet tijdens de publieke periode.
