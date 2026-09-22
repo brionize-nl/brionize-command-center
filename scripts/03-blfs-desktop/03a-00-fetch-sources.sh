@@ -62,6 +62,14 @@ declare -A URLS=(
   [libxshmfence-1.3.3.tar.xz]="https://www.x.org/pub/individual/lib/libxshmfence-1.3.3.tar.xz"
   [libXpresent-1.0.1.tar.xz]="https://www.x.org/pub/individual/lib/libXpresent-1.0.1.tar.xz"
 
+  # mkfontscale — vereist door encodings (onderdeel van de x7font-lus
+  # hieronder): "mkfontscale is required to build encodings." Losstaand uit
+  # de x7app.html-batch getrokken (33 pakketten, met als aggregate
+  # "Required" o.a. Mesa) — we bouwen NIET de hele batch, alleen dit ene
+  # pakket, om de bewuste Mesa/glamor-vrije keuze bij xorg-server niet
+  # alsnog via de achterdeur te doorbreken.
+  [mkfontscale-1.2.3.tar.xz]="https://www.x.org/pub/individual/app/mkfontscale-1.2.3.tar.xz"
+
   # x7font.html — 9 fontpakketten (generieke lus, zie 09-x7font-loop.sh)
   [font-util-1.4.1.tar.xz]="https://www.x.org/pub/individual/font/font-util-1.4.1.tar.xz"
   [encodings-1.1.0.tar.xz]="https://www.x.org/pub/individual/font/encodings-1.1.0.tar.xz"
@@ -123,6 +131,8 @@ declare -A MD5=(
   [libxkbfile-1.1.3.tar.xz]="229708c15c9937b6e5131d0413474139"
   [libxshmfence-1.3.3.tar.xz]="9805be7e18f858bed9938542ed2905dc"
   [libXpresent-1.0.1.tar.xz]="bdd3ec17c6181fd7b26f6775886c730d"
+
+  [mkfontscale-1.2.3.tar.xz]="7dcf5f702781bdd4aaff02e963a56270"
 
   [font-util-1.4.1.tar.xz]="a6541d12ceba004c0c1e3df900324642"
   [encodings-1.1.0.tar.xz]="a56b1a7f2c14173f71f010225fa131f1"

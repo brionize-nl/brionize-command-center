@@ -17,6 +17,7 @@ STEPS=(
   "07a-freetype.sh"
   "07b-fontconfig.sh"
   "08-x7lib-loop.sh"
+  "08a-mkfontscale.sh"
   "09-x7font-loop.sh"
   "10-libxcvt.sh"
   "11-pixman.sh"

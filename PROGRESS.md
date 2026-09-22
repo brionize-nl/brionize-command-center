@@ -512,6 +512,35 @@
     Testsuite overgeslagen (heeft internettoegang nodig, past niet bij
     CI — zelfde patroon als de 53 eerder overgeslagen hoofdstuk-8-tests).
     Ingevoegd na `07a-freetype.sh`, vóór de x7lib-lus.
+- **Fontconfig-fix bevestigd: de hele x7lib-lus (32 pakketten) is nu
+  voorbij.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35713035502
+  (job 106697922861): stappen 01 t/m 08 (`08-x7lib-loop.sh geslaagd`)
+  allemaal groen — libXft (en de rest van de 32) bouwt nu probleemloos met
+  zowel FreeType als Fontconfig aanwezig. Meteen daarna faalde
+  `09-x7font-loop.sh` (de 9-pakketten-fontlus) op het tweede pakket:
+  ```
+  checking for mkfontscale... no
+  configure: error: mkfontscale is required to build encodings.
+  ```
+  - **Root cause:** `encodings` (onderdeel van de x7font-lus) heeft het
+    `mkfontscale`-commando nodig om te kunnen configureren. Dat commando
+    komt niet uit x7font.html zelf, maar uit een heel ANDERE BLFS-pagina:
+    x7app.html ("Xorg Applications"), een losse batch van 33
+    hulpprogramma's met als aggregate "Required"-dependency o.a.
+    Mesa-25.1.8 (waarschijnlijk voor xdriinfo, een DRI-diagnosetool — het
+    boek splitst dit niet per pakket uit).
+  - **Bewuste keuze:** NIET de hele x7app-batch (33 pakketten + Mesa)
+    bouwen — dat zou de eerder bewust genomen Mesa/glamor-vrije keuze bij
+    xorg-server (`-D glamor=false`, zie eerdere entry) alsnog via de
+    achterdeur doorbreken, puur om één configure-check bij encodings
+    tevreden te stellen. In plaats daarvan: alléén `mkfontscale-1.2.3`
+    losstaand gebouwd als `08a-mkfontscale.sh` (levert ook `mkfontdir`,
+    uit dezelfde tarball), ingevoegd na de x7lib-lus en vóór de
+    x7font-lus. De rest van x7app.html (xrandr, xinput, xev, xkill, etc.)
+    volgt eventueel later als eigen sub-stap, mogelijk met xdriinfo
+    bewust overgeslagen om Mesa te blijven vermijden — dat is nog geen
+    beslispunt zolang de x7font-lus zelf niet verder blokkeert.
 - **Volgende stap:** dit committen/pushen en herhalen — verwacht nu
-  voorbij de x7lib-lus te komen (beide cache-lagen blijven hits, dus dit
+  voorbij de x7font-lus te komen (beide cache-lagen blijven hits, dus dit
   kost geen hertijd voor fase 1+2).
