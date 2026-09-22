@@ -628,11 +628,26 @@
   alleen `-D gallium-drivers=llvmpipe` (software-rendering, geen
   hardware-GPU-vendor-drivers) — zie BLUEPRINT.md Beslislog
   (2026-09-22) voor de volledige onderbouwing en exacte meson-opties.
+- **secure-rpc-fix bevestigd: meson-configure van xorg-server slaagt nu
+  volledig** (geen enkele configure-fout meer). Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35725553502
+  (job 106738220556, snel — bootstrap+ch8-cache beide hit zoals verwacht
+  na de vorige run). Maar de daadwerkelijke `ninja`-bouwstap faalt nu
+  (niet meer configure):
+  ```
+  ../hw/xfree86/os-support/linux/lnx_platform.c:7:10: fatal error: xf86drm.h: No such file or directory
+  ```
+  - **Root cause:** xorg-server's xfree86-platformlaag gebruikt
+    DRM/KMS-modesetting-ioctls (via `xf86drm.h`, uit libdrm) onafhankelijk
+    van glamor/GLX — dit is dus GEEN Mesa-gerelateerd probleem, gewoon
+    een losse, nog niet gebouwde dependency (`libdrm`). Bevestigd via
+    libdrm's eigen BLFS-pagina: libdrm heeft zelf geen Mesa nodig, alleen
+    "Recommended: Xorg Libraries" (al aanwezig) — een licht, losstaand
+    pakket dat los staat van de eerdere Mesa/GTK3-architectuurvraag.
+  - **Fix:** Libdrm-2.4.125 toegevoegd als `12a-libdrm.sh` (meson-build,
+    letterlijk van de officiële BLFS-pagina), vóór `13-xorg-server.sh`.
 - **Volgende stap:** dit committen/pushen en herhalen — verwacht nu fase
   3a (Xorg-basisbibliotheken + server) volledig groen te zien, mét de
-  nieuwe derde cache-laag (xorg-complete) succesvol opgeslagen. Bij een
-  cache-hit op bootstrap+ch8 (verwacht, want die hash is nu ongewijzigd
-  sinds deze run ze opnieuw opsloeg) zou dit weer een snelle
-  paar-minuten-iteratie moeten zijn i.p.v. de volledige ~1u40m van deze
-  run. Daarna: Mesa (llvmpipe-only) + de GTK3-supporting-stack scripten
-  als nieuwe sub-fase 03b, met dezelfde audit-eerst-discipline.
+  derde cache-laag (xorg-complete) succesvol opgeslagen. Daarna: Mesa
+  (llvmpipe-only) + de GTK3-supporting-stack scripten als nieuwe
+  sub-fase 03b, met dezelfde audit-eerst-discipline.

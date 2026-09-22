@@ -22,6 +22,7 @@ STEPS=(
   "10-libxcvt.sh"
   "11-pixman.sh"
   "12-xkeyboard-config.sh"
+  "12a-libdrm.sh"
   "13-xorg-server.sh"
 )
 

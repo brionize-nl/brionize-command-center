@@ -81,6 +81,13 @@ declare -A URLS=(
   [font-misc-ethiopic-1.0.5.tar.xz]="https://www.x.org/pub/individual/font/font-misc-ethiopic-1.0.5.tar.xz"
   [font-xfree86-type1-1.0.5.tar.xz]="https://www.x.org/pub/individual/font/font-xfree86-type1-1.0.5.tar.xz"
 
+  # libdrm — vereist door xorg-server zelf (los van de latere Mesa/GTK3-
+  # kwestie!): hw/xfree86/os-support/linux/lnx_platform.c gebruikt
+  # xf86drm.h voor DRM/KMS-modesetting-ioctls, ook zonder glamor/GLX.
+  # Libdrm heeft zelf GEEN Mesa nodig (alleen "Recommended: Xorg
+  # Libraries", al aanwezig) — losstaand en licht.
+  [libdrm-2.4.125.tar.xz]="https://dri.freedesktop.org/libdrm/libdrm-2.4.125.tar.xz"
+
   # xorg-server + losse vereiste dependencies
   [libxcvt-0.1.3.tar.xz]="https://www.x.org/pub/individual/lib/libxcvt-0.1.3.tar.xz"
   [pixman-0.46.4.tar.gz]="https://www.cairographics.org/releases/pixman-0.46.4.tar.gz"
@@ -143,6 +150,8 @@ declare -A MD5=(
   [font-ibm-type1-1.0.4.tar.xz]="00f64a84b6c9886040241e081347a853"
   [font-misc-ethiopic-1.0.5.tar.xz]="fe972eaf13176fa9aa7e74a12ecc801a"
   [font-xfree86-type1-1.0.5.tar.xz]="3b47fed2c032af3a32aad9acc1d25150"
+
+  [libdrm-2.4.125.tar.xz]="3baec8e685510892b3355a7074baa874"
 
   [libxcvt-0.1.3.tar.xz]="7fb9c51d33a680f724f34da41768b1d0"
   [pixman-0.46.4.tar.gz]="c08173c8e1d2cc79428d931c13ffda59"
