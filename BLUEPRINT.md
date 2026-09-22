@@ -182,6 +182,64 @@ als iets al misgaat, maar het standaard vertrekpunt:
    het schrijven van nieuwe pakketscripts (fase 3/4) hier direct op
    controleren, niet pas na een mislukte run.
 
+## Dependency-audit fase 3b/3c — XFCE-core + GTK3-stack (2026-09-22)
+Uitgevoerd op coordinator-verzoek: niet langer één ontbrekende dependency
+per CI-run ontdekken (zoals bij freetype/fontconfig/mkfontscale in 03a),
+maar eerst de volledige resterende pakketlijst tegen de officiële BLFS
+12.4 Required/Recommended-tabellen naleggen. Bronnen: alle 17 individuele
+XFCE-core-paginas (`xfce/*.html`, letterlijk gedownload en geparsed, niet
+uit het geheugen) plus de directe GTK3-supporting-stack-paginas.
+
+**XFCE-core (17 pakketten, exacte volgorde volgt uit de onderlinge
+Required-afhankelijkheden hieronder):**
+libxfce4util-4.20.1 → xfconf-4.20.0 → libxfce4ui-4.20.2 → exo-4.20.0 →
+garcon-4.20.0 → libwnck-43.2 → xfce4-dev-tools-4.20.0 →
+libxfce4windowing-4.20.4 → xfce4-panel-4.20.5 → thunar-4.20.4 →
+thunar-volman-4.20.0 → tumbler-4.20.0 → xfce4-appfinder-4.20.0 →
+xfce4-settings-4.20.2 → xfdesktop-4.20.1 → xfwm4-4.20.0 →
+xfce4-session-4.20.3. Alle onderlinge Required-koppelingen (bv.
+libxfce4ui vereist Xfconf, Exo vereist libxfce4ui, xfce4-panel vereist
+Exo+Garcon+libwnck+libxfce4windowing) al opgezocht en consistent met
+deze volgorde.
+
+**Externe (niet-Xfce) Required/Recommended-pakketten die XFCE-core als
+geheel nodig heeft, nog niet gebouwd:** GTK-3.24.50, Cairo-1.18.4 (voor
+xfce4-panel), libdisplay-info-0.3.0 (voor libxfce4windowing),
+hicolor-icon-theme-0.18 (runtime, thunar), startup-notification-0.12
+(aanbevolen bij libxfce4ui/libwnck/xfwm4/xfdesktop), pcre2-10.45
+(aanbevolen, thunar), libgudev-238 (vereist door thunar-volman),
+libnotify-0.8.6 (aanbevolen, meerdere), gnome-icon-theme-3.12.0 of
+lxde-icon-theme-0.5.1 (vereist runtime, xfce4-settings),
+libxklavier-5.4 (aanbevolen, xfce4-settings), desktop-file-utils-0.28 en
+shared-mime-info-2.4 (aanbevolen, xfce4-session).
+
+**GTK3's eigen Required-laag (opgezocht via de officiële GTK3-pagina):**
+at-spi2-core-2.56.4, gdk-pixbuf-2.42.12, libepoxy-1.5.10, Pango-1.56.4,
+en (effectief ook verplicht voor ons, ondanks de boek-tekst
+"Recommended (Required if building GNOME)") GLib-2.84.4 met GObject
+Introspection — XFCE-core zelf vereist GLib al rechtstreeks
+(libxfce4util, xfce4-dev-tools, tumbler).
+
+### KRITIEKE BEVINDING — echt beslispunt, teruggelegd bij Brionize
+**`libepoxy-1.5.10` (een Required-dependency van GTK3 zelf, dus van
+elke GTK3-toepassing incl. heel XFCE) heeft op zijn beurt Mesa-25.1.8
+als Required-dependency** — letterlijk van libepoxy's eigen officiële
+BLFS-pagina, geen uitzondering of build-flag om dit te omzeilen
+gevonden op de GTK3- of libepoxy-pagina zelf.
+
+Dit raakt de eerder BEWUST genomen keuze bij xorg-server
+(`-D glamor=false -D glx=false`, zie eerdere PROGRESS.md-entries) —
+die keuze werkte om Mesa buiten de kale Xorg-server te houden, maar
+zodra XFCE (elke GTK3-toepassing) in beeld komt, is Mesa via libepoxy
+onvermijdelijk, ongeacht wat we bij xorg-server zelf instellen. De
+oorspronkelijke onderbouwing ("generieke hardware, geen
+GPU-driver-afhankelijkheid") staat dus op losse schroeven voor de
+GTK3/XFCE-laag — dit is precies het soort fundamentele
+architectuurbeslissing die volgens de Matrix (Autopilot Decision
+Boundary) niet zelfstandig door de AI genomen wordt, ook niet onder
+Autopilot. Aan Brionize voorgelegd via een aparte vraag in dezelfde
+beurt als deze BLUEPRINT-update.
+
 ## Security / Secrets (grondregel, niet-onderhandelbaar)
 - **Nooit hardcoded secrets, accounts of persoonlijke data in de repo** —
   ook niet tijdens de publieke periode.
