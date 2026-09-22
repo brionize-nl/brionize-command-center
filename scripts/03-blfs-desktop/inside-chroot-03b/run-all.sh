@@ -14,6 +14,7 @@ STEPS=(
   "04-mako.sh"
   "05-cython.sh"
   "06-pyyaml.sh"
+  "06a-docutils.sh"
   "07-glib-stage1.sh"
   "08-gobject-introspection.sh"
   "09-glib-stage2.sh"

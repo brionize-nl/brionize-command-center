@@ -724,9 +724,30 @@
   - **Fix:** `--system-libs` (en de nu overbodige --no-system-*-
     uitzonderingen) verwijderd — CMake bundelt deze bibliotheken dan
     intern, geen extra pakketten nodig.
+- **cmake-fix bevestigd: cmake en libjpeg-turbo beide groen.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35735437049
+  (job 106771351676, 25m39s): xorg-complete-cache weer een hit zoals
+  verwacht. `20-cmake.sh` en `21-libjpeg-turbo.sh` slaagden. Faalde
+  daarna meteen op `22-gdk-pixbuf.sh`, met LETTERLIJK dezelfde
+  onderliggende oorzaak als de GLib-fix hiervoor:
+  ```
+  Program rst2man rst2man.py found: NO
+  ../docs/meson.build:69:2: ERROR: Problem encountered: No rst2man found, but man pages were explicitly enabled
+  ```
+  - **Anti-Patch-Loop-afweging:** dit is de TWEEDE keer dat een los
+    pakket faalt op ontbrekende `rst2man` (uit docutils) bij
+    boek-standaard man-pages/documentatie-instellingen. In plaats van
+    dit per pakket te blijven tegenkomen en telkens een nieuwe
+    `-D man*=disabled`-vlag te zoeken, nu de ROOT CAUSE aangepakt:
+    docutils-0.21.2 zelf toegevoegd als `06a-docutils.sh` (vroeg in
+    03b, vóór GLib), zodat `rst2man` vanaf dat punt gewoon bestaat voor
+    ALLE latere pakketten (at-spi2-core, Mesa, GTK3 — nog niet getest,
+    maar dit voorkomt een hele klasse potentiële herhalingen). De twee
+    al bewezen losse `-D man-pages=disabled`/`-D man=false`-fixes bij
+    GLib en gdk-pixbuf blijven staan (geen reden om te herstellen, ze
+    werken en zijn nu gewoon overbodig-maar-onschadelijk).
 - **Volgende stap:** dit committen/pushen en herhalen. Verwacht nu
-  opnieuw een xorg-complete-cache-HIT (geen 03a/run-all.sh-wijziging
-  deze keer), gevolgd door verder in 03b — cmake, libjpeg-turbo,
+  opnieuw een xorg-complete-cache-HIT, gevolgd door verder in 03b —
   gdk-pixbuf, at-spi2-core, dan het zware LLVM/Mesa/libepoxy/GTK3-
   slotstuk. Root-cause-discipline blijft hetzelfde. Zodra 03b groen is:
   fase 3c (XFCE-core, 17 pakketten, volgorde al vastgelegd in

@@ -4,7 +4,9 @@
 # aanwezig. '-D others=enabled' bouwt de ingebouwde formaat-loaders
 # (tga/pnm/etc.) — niet de externe-lib-afhankelijke loaders
 # (avif/jxl/webp), die bewust niet meegenomen zijn (alleen "Optional
-# runtime dependency").
+# runtime dependency"). '-D man=false' (boek default: aan) — zelfde
+# rst2man/docutils-probleem als bij GLib (07-glib-stage1.sh): "No
+# rst2man found, but man pages were explicitly enabled".
 set -euo pipefail
 cd /sources
 tar -xf gdk-pixbuf-2.42.12.tar.xz
@@ -17,6 +19,7 @@ meson setup ..            \
     --prefix=/usr       \
     --buildtype=release \
     -D others=enabled   \
+    -D man=false         \
     --wrap-mode=nofallback
 ninja
 ninja install

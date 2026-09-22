@@ -29,6 +29,11 @@ declare -A URLS=(
   [cython-3.1.3.tar.gz]="https://github.com/cython/cython/releases/download/3.1.3/cython-3.1.3.tar.gz"
   [pyyaml-6.0.2.tar.gz]="https://files.pythonhosted.org/packages/source/P/PyYAML/pyyaml-6.0.2.tar.gz"
 
+  # docutils — levert rst2man; toegevoegd na een terugkerend patroon
+  # (Anti-Patch-Loop): meerdere latere pakketten (GLib, gdk-pixbuf, ...)
+  # verwachten dit voor man-pages/documentatie op boek-standaardinstellingen.
+  [docutils-0.21.2.tar.gz]="https://files.pythonhosted.org/packages/source/d/docutils/docutils-0.21.2.tar.gz"
+
   # GLib + GObject-Introspection (twee-staps-bootstrap, zie 07-09)
   [glib-2.84.4.tar.xz]="https://download.gnome.org/sources/glib/2.84/glib-2.84.4.tar.xz"
   [gobject-introspection-1.84.0.tar.xz]="https://download.gnome.org/sources/gobject-introspection/1.84/gobject-introspection-1.84.0.tar.xz"
@@ -68,6 +73,7 @@ declare -A MD5=(
   [mako-1.3.10.tar.gz]="c9dfb2bf42827459dd505c60f2262a7c"
   [cython-3.1.3.tar.gz]="f508595cc0951a77b70c07100df1b4ff"
   [pyyaml-6.0.2.tar.gz]="9600ee49b2b4e1a0237cf4173b6dc594"
+  [docutils-0.21.2.tar.gz]="c4064e1e0e3cd142951fd2b95b830874"
 
   [glib-2.84.4.tar.xz]="5655d0ff809b98dd77c02490609fadde"
   [gobject-introspection-1.84.0.tar.xz]="2a62fb1c584616a8ebcd9dd4d045f27e"
