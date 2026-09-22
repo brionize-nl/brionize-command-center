@@ -24,6 +24,10 @@ declare -A URLS=(
   # oorspronkelijk bij een latere GTK-stack-sub-fase, maar is al hier nodig.
   [freetype-2.13.3.tar.xz]="https://downloads.sourceforge.net/freetype/freetype-2.13.3.tar.xz"
 
+  # Fontconfig — ook vereist door libXft (naast Freetype hierboven), zelfde
+  # reden: pas ontdekt via een echte configure-fout in de x7lib-lus.
+  [fontconfig-2.17.1.tar.xz]="https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/2.17.1/fontconfig-2.17.1.tar.xz"
+
   # x7lib.html — 32 Xorg-bibliotheken (generieke lus, zie 08-x7lib-loop.sh)
   [xtrans-1.6.0.tar.xz]="https://www.x.org/pub/individual/lib/xtrans-1.6.0.tar.xz"
   [libX11-1.8.12.tar.xz]="https://www.x.org/pub/individual/lib/libX11-1.8.12.tar.xz"
@@ -85,6 +89,7 @@ declare -A MD5=(
   [libxcb-1.17.0.tar.xz]="96565523e9f9b701fcb35d31f1d4086e"
   [xcb-util-0.4.1.tar.xz]="34d749eab0fd0ffd519ac64798d79847"
   [freetype-2.13.3.tar.xz]="f3b4432c4212064c00500e1ad63fbc64"
+  [fontconfig-2.17.1.tar.xz]="f68f95052c7297b98eccb7709d817f6a"
 
   [xtrans-1.6.0.tar.xz]="6ad67d4858814ac24e618b8072900664"
   [libX11-1.8.12.tar.xz]="146d770e564812e00f97e0cbdce632b7"

@@ -480,6 +480,38 @@
     `general/freetype.html`), vóór de x7lib-lus in de stappenvolgorde.
     Geen `freetype-doc`-pakket meegenomen (optioneel, niet nodig om te
     bouwen/linken).
-- **Volgende stap:** dit committen/pushen en herhalen — dit zou nu
-  voorbij de x7lib-lus moeten komen (ch8-complete-cache is nu een hit,
-  dus dit kost geen ~52 minuten hoofdstuk-8-hertijd meer).
+- **Freetype-fix bevestigd in CI, maar meteen een tweede, verwante
+  ontbrekende-dependency-fout.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35627780539
+  (job 106426264120, 7m11s totaal): beide cache-lagen (bootstrap +
+  ch8-complete) waren nu een hit — bevestigd via de run-summary
+  ("Bootstrap-cache-archief bouwen/opslaan" en "Ch8-complete-cache-archief
+  bouwen/opslaan" stonden allebei op "-" = overgeslagen). Dit bewijst dat
+  de twee-laags cache-architectuur nu volledig werkt voor snelle iteratie:
+  van ~1u32m naar 7m11s voor een run die pas laat in fase 3a faalt.
+  Stappen 01 t/m 07a (freetype) slaagden allemaal
+  (`07a-freetype.sh geslaagd`, incl. "checking for freetype2 >= 2.1.6...
+  yes"), maar `08-x7lib-loop.sh` faalde meteen erna op:
+  ```
+  checking for fontconfig >= 2.5.92... no
+  configure: error: Package requirements (fontconfig >= 2.5.92) were not met:
+  Package 'fontconfig' not found
+  ```
+  - **Root cause:** `libXft` (zelfde package als bij de freetype-fout)
+    heeft naast FreeType ook Fontconfig nodig — allebei stonden ze
+    mentaal onder de latere GTK-stack-sub-fase gepland, maar de kale
+    x7lib-lus heeft ze al nodig.
+  - **Fix:** Fontconfig-2.17.1 toegevoegd als `07b-fontconfig.sh` (BLFS
+    12.4, letterlijk van de officiële pagina
+    `general/fontconfig.html` — die bestond deze keer wél op het voor de
+    hand liggende pad). Bron is een gitlab.freedesktop.org-package-URL
+    (niet ftp.gnu.org, dus geen GNU-mirrornetwerk-fallback van
+    toepassing, maar de overige fetch_verified()-fallbacks gelden
+    gewoon). `--disable-docs` gebruikt (boek-optie, voorkomt een
+    DocBook-utils/texlive-afhankelijkheid die we niet bouwen).
+    Testsuite overgeslagen (heeft internettoegang nodig, past niet bij
+    CI — zelfde patroon als de 53 eerder overgeslagen hoofdstuk-8-tests).
+    Ingevoegd na `07a-freetype.sh`, vóór de x7lib-lus.
+- **Volgende stap:** dit committen/pushen en herhalen — verwacht nu
+  voorbij de x7lib-lus te komen (beide cache-lagen blijven hits, dus dit
+  kost geen hertijd voor fase 1+2).
