@@ -686,8 +686,28 @@
     losse, apart gecachete docker-run-stappen binnen dezelfde job
     (`SKIP_GTK3_STACK=true` resp. `SKIP_XORG=true`), zodat een latere
     fout in fase 3c (XFCE-core) niet ook 03a of 03b hoeft te herbouwen.
-- **Volgende stap:** dit committen/pushen en de eerste 03b-run afwachten
-  — dit wordt de langste CI-run tot nu toe (LLVM alleen al). Root-cause-
-  discipline blijft hetzelfde: bij een fout de echte log induiken, geen
-  fixes gokken. Zodra 03b groen is: fase 3c (XFCE-core, 17 pakketten,
-  volgorde al vastgelegd in BLUEPRINT.md) scripten.
+- **Eerste 03b-run: snel tot en met de eerste zes pakketten, toen
+  GLib-stap-1 faalde.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35731136524
+  (job 106756703394): 03a moest onverwacht volledig herbouwen (de
+  xorg-complete-cache-hash bevat `03-blfs-desktop/run-all.sh`, dat wél
+  wijzigde toen de SKIP_GTK3_STACK-logica erbij kwam — dus terechte,
+  verwachte cache-miss, geen bug). 03a bleef daarna wel weer helemaal
+  groen, en de nieuwe xorg-complete-cache is met de huidige hash
+  opnieuw succesvol opgeslagen (dus de volgende run zou 03a weer moeten
+  overslaan). 03b: pcre2 t/m pyyaml (6 pakketten) allemaal snel groen,
+  toen:
+  ```
+  ../meson.build:2727:10: ERROR: Program 'rst2man rst2man.py' not found or not executable
+  ```
+  - **Root cause:** `-D man-pages=enabled` in `07-glib-stage1.sh` (boek-
+    default) vereist `rst2man` (uit docutils, GLib's eigen
+    "Recommended", bewust niet gebouwd).
+  - **Fix:** `-D man-pages=disabled` — geen man-pages nodig voor een
+    werkend systeem.
+- **Volgende stap:** dit committen/pushen en herhalen. Verwacht nu een
+  xorg-complete-cache-HIT (03a overgeslagen, snel) gevolgd door een
+  langere 03b-build (LLVM). Root-cause-discipline blijft hetzelfde: bij
+  een fout de echte log induiken, geen fixes gokken. Zodra 03b groen
+  is: fase 3c (XFCE-core, 17 pakketten, volgorde al vastgelegd in
+  BLUEPRINT.md) scripten.
