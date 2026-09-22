@@ -19,6 +19,14 @@
 #   op de ontbrekende 'dri'-pkgconfig-dependency. Gevonden door de
 #   letterlijke meson.build/meson_options.txt uit de brontarball te lezen
 #   (niet uit het geheugen of aannames).
+# - '-D secure-rpc=false' (boek default: true). Na de glx-fix bleek een
+#   DERDE, aparte configure-fout: "secure-rpc requested, but neither
+#   libtirpc or libc RPC support were found" (os/meson.build:63) — onze
+#   glibc heeft geen legacy Sun-RPC-headers meer (rpc/rpc.h ontbreekt,
+#   modern glibc), en libtirpc (BLFS "Recommended", niet "Required") is
+#   niet gebouwd. secure-rpc voegt XDM-AUTHORIZATION-1-ondersteuning toe
+#   (legacy XDMCP-authenticatie) — niet nodig voor deze generieke
+#   desktop, dus uitgezet i.p.v. alsnog libtirpc erbij te halen.
 set -euo pipefail
 source "$(dirname "$0")/00-xorg-env.sh"
 cd /sources
@@ -33,6 +41,7 @@ meson setup .. \
   --localstatedir=/var \
   -D glamor=false \
   -D glx=false \
+  -D secure-rpc=false \
   -D systemd_logind=false \
   -D xkb_output_dir=/var/lib/xkb
 ninja

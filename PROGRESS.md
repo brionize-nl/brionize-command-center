@@ -589,10 +589,50 @@
      apps-laag) niet meer heel 03a te herbouwen.
   3. BLUEPRINT.md's "Vast bouwpatroon per fase" bijgewerkt (punt 3 en 4)
      om deze twee wijzigingen en hun onderbouwing vast te leggen.
+- **`-j4` bevestigd: volledig hoofdstuk 5 t/m 8 herbouwd zonder enig
+  probleem.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35715449589
+  (job 106705744010): omdat `02-base-system/run-all.sh` zelf wijzigde
+  (de `-j4`-regel), werden zowel de bootstrap- als de ch8-complete-cache
+  ongeldig — dus een volledige verse rebuild van hoofdstuk 5 t/m 8, nu
+  met `-j4`. Alle ~100 pakketten slaagden, inclusief de eerder
+  gevoelige stappen (27-gcc.sh, 81-stripping.sh). Geen enkele
+  regressie. Beide cache-lagen zijn met de nieuwe `-j4`-hash opnieuw
+  succesvol opgeslagen.
+  - **Fase 3a ging tot en met stap 12 (xkeyboard-config) foutloos door**
+    (inclusief de eerder gefixte freetype/fontconfig/mkfontscale-stappen
+    en de hele x7lib/x7font-lus), en de `-D glx=false`-fix werkte: de
+    eerdere `dri`-fout is weg. Maar meteen daarna een DERDE, aparte
+    configure-fout in `13-xorg-server.sh`:
+    ```
+    Run-time dependency libtirpc found: NO (tried pkgconfig and cmake)
+    Has header "rpc/rpc.h" : NO
+    ../os/meson.build:63:8: ERROR: Problem encountered: secure-rpc requested, but neither libtirpc or libc RPC support were found
+    ```
+  - **Root cause:** `secure-rpc` staat standaard aan (`meson_options.txt`)
+    en probeert legacy Sun-RPC-ondersteuning te vinden — via libtirpc
+    (BLFS "Recommended", niet gebouwd) of via glibc's eigen (inmiddels
+    uit moderne glibc verwijderde) `rpc/rpc.h`. Dit voedt XDM-
+    AUTHORIZATION-1 (een legacy XDMCP-authenticatiemethode), niet nodig
+    voor deze generieke desktop.
+  - **Fix:** `-D secure-rpc=false` toegevoegd aan `13-xorg-server.sh`,
+    naast de bestaande `glamor=false`/`glx=false`/`systemd_logind=false`.
+- **Belangrijke, fundamentele bevinding tijdens CI-wachttijd ontdekt (los
+  van deze losse configure-fouten):** een volledige dependency-audit van
+  XFCE-core (17 pakketten) + GTK3's eigen Required-laag tegen de
+  officiële BLFS-pagina's (zie BLUEPRINT.md "Dependency-audit fase
+  3b/3c") toont dat **GTK3 via `libepoxy` hard Mesa-25.1.8 nodig heeft**
+  — dus onvermijdelijk voor heel XFCE, los van de xorg-server-keuze om
+  Mesa te vermijden. Voorgelegd aan Brionize als een echt beslispunt;
+  Brionize gaf de AI mandaat om te kiezen. Besluit: Mesa MET, maar
+  alleen `-D gallium-drivers=llvmpipe` (software-rendering, geen
+  hardware-GPU-vendor-drivers) — zie BLUEPRINT.md Beslislog
+  (2026-09-22) voor de volledige onderbouwing en exacte meson-opties.
 - **Volgende stap:** dit committen/pushen en herhalen — verwacht nu fase
   3a (Xorg-basisbibliotheken + server) volledig groen te zien, mét de
-  nieuwe derde cache-laag succesvol opgeslagen. Daarna: begin van de
-  grondige BLFS-dependency-audit voor de resterende fase-3-pakketlijst
-  (GTK3/glib-stack + XFCE-core, 18 pakketten) tegen de officiële
-  Required/Recommended-tabellen, om het "één-dependency-per-CI-run"-
-  patroon niet te herhalen voor die grotere batch.
+  nieuwe derde cache-laag (xorg-complete) succesvol opgeslagen. Bij een
+  cache-hit op bootstrap+ch8 (verwacht, want die hash is nu ongewijzigd
+  sinds deze run ze opnieuw opsloeg) zou dit weer een snelle
+  paar-minuten-iteratie moeten zijn i.p.v. de volledige ~1u40m van deze
+  run. Daarna: Mesa (llvmpipe-only) + de GTK3-supporting-stack scripten
+  als nieuwe sub-fase 03b, met dezelfde audit-eerst-discipline.
