@@ -150,13 +150,46 @@ jobs:
           path: ${{ runner.temp }}/lfs-ch8-complete-cache.tar.zst
           key: lfs-ch8-complete-${{ hashFiles('docker/Dockerfile.build', 'scripts/01-toolchain/**', 'scripts/02-base-system/run-all.sh', 'scripts/02-base-system/ch6-*.sh', 'scripts/02-base-system/ch7-*.sh', 'scripts/02-base-system/ch8-00-fetch-sources.sh', 'scripts/02-base-system/inside-chroot/**', 'scripts/02-base-system/inside-chroot-ch8/**', 'scripts/lib/**') }}
 
-      - name: Fase 3 (BLFS-desktop) bouwen
+      - name: Xorg-complete-cache herstellen (indien beschikbaar)
+        # Derde cache-laag: fase 1 + hoofdstuk 6+7+8 + fase 3a (Xorg-basis)
+        # samen. Zonder dit zou elke latere fase-3-iteratie (XFCE-kern,
+        # apps-laag) ook 03a (Xorg-libs+server, ~zelf al een paar minuten
+        # zodra de onderliggende lagen al cachen) opnieuw moeten bouwen.
+        # Zelfde tar-bestand-aanpak als de eerdere twee cache-lagen.
+        id: lfs-xorg-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/lfs-xorg-complete-cache.tar.zst
+          key: lfs-xorg-complete-${{ hashFiles('docker/Dockerfile.build', 'scripts/01-toolchain/**', 'scripts/02-base-system/run-all.sh', 'scripts/02-base-system/ch6-*.sh', 'scripts/02-base-system/ch7-*.sh', 'scripts/02-base-system/ch8-00-fetch-sources.sh', 'scripts/02-base-system/inside-chroot/**', 'scripts/02-base-system/inside-chroot-ch8/**', 'scripts/03-blfs-desktop/run-all.sh', 'scripts/03-blfs-desktop/03a-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03a/**', 'scripts/lib/**') }}
+
+      - name: Fase 3 (BLFS-desktop) bouwen (of cache hergebruiken)
         run: |
-          docker run --rm --privileged \
-            -v "$RUNNER_TEMP/lfs:/mnt/lfs" \
-            -v "$GITHUB_WORKSPACE/scripts:/opt/lfs/scripts:ro" \
-            brionize-lfs-toolchain:latest \
-            bash -c "bash /opt/lfs/scripts/03-blfs-desktop/run-all.sh"
+          if [ "${{ steps.lfs-xorg-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "==> Cache-hit: hash van fase 1 t/m 03a ongewijzigd — uitpakken i.p.v. herbouwen (03a overgeslagen)."
+            sudo rm -rf "$RUNNER_TEMP/lfs"
+            mkdir -p "$RUNNER_TEMP/lfs"
+            sudo tar --zstd -xpf "$RUNNER_TEMP/lfs-xorg-complete-cache.tar.zst" -C "$RUNNER_TEMP/lfs"
+          else
+            echo "==> Cache-miss: 03a (Xorg-basis) nog bouwen."
+            docker run --rm --privileged \
+              -v "$RUNNER_TEMP/lfs:/mnt/lfs" \
+              -v "$GITHUB_WORKSPACE/scripts:/opt/lfs/scripts:ro" \
+              brionize-lfs-toolchain:latest \
+              bash -c "bash /opt/lfs/scripts/03-blfs-desktop/run-all.sh"
+          fi
+
+      - name: Xorg-complete-cache-archief bouwen (alleen bij cache-miss)
+        if: steps.lfs-xorg-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo tar --zstd -cpf "$RUNNER_TEMP/lfs-xorg-complete-cache.tar.zst" -C "$RUNNER_TEMP/lfs" .
+          sudo chown "$(id -u):$(id -g)" "$RUNNER_TEMP/lfs-xorg-complete-cache.tar.zst"
+
+      - name: Xorg-complete-cache opslaan (alleen bij cache-miss)
+        if: steps.lfs-xorg-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/lfs-xorg-complete-cache.tar.zst
+          key: lfs-xorg-complete-${{ hashFiles('docker/Dockerfile.build', 'scripts/01-toolchain/**', 'scripts/02-base-system/run-all.sh', 'scripts/02-base-system/ch6-*.sh', 'scripts/02-base-system/ch7-*.sh', 'scripts/02-base-system/ch8-00-fetch-sources.sh', 'scripts/02-base-system/inside-chroot/**', 'scripts/02-base-system/inside-chroot-ch8/**', 'scripts/03-blfs-desktop/run-all.sh', 'scripts/03-blfs-desktop/03a-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03a/**', 'scripts/lib/**') }}
 
       - name: Logs uploaden (ook bij falen)
         if: always()

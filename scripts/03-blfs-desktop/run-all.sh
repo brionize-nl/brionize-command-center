@@ -14,9 +14,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export LFS=/mnt/lfs
 LOG_DIR="$LFS/sources"
 SKIP_XORG="${SKIP_XORG:-false}"
-# Zelfde behoudende waarde als fase 2 (zie BLUEPRINT.md "Vast bouwpatroon
-# per fase") — geen reden om terug te veranderen zonder concrete aanleiding.
-CHROOT_MAKE_JOBS="2"
+# Zelfde -j4 als fase 2 nu (zie 02-base-system/run-all.sh) — de eerdere
+# -j2-voorzichtigheid bleek gebaseerd op een verkeerde oorzaakaanname.
+CHROOT_MAKE_JOBS="4"
 
 echo "==> Fase 3: virtuele kernel-bestandssystemen (opnieuw, verse container)"
 bash "$(dirname "$SCRIPT_DIR")/02-base-system/ch7-02-mount-kernfs.sh"

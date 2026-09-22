@@ -541,6 +541,58 @@
     volgt eventueel later als eigen sub-stap, mogelijk met xdriinfo
     bewust overgeslagen om Mesa te blijven vermijden — dat is nog geen
     beslispunt zolang de x7font-lus zelf niet verder blokkeert.
-- **Volgende stap:** dit committen/pushen en herhalen — verwacht nu
-  voorbij de x7font-lus te komen (beide cache-lagen blijven hits, dus dit
-  kost geen hertijd voor fase 1+2).
+- **mkfontscale-fix bevestigd: de hele x7font-lus (9 pakketten) is nu ook
+  voorbij, plus libxcvt, pixman en xkeyboard-config.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35714212965
+  (job 106701735212): `08-x7lib-loop.sh`, `08a-mkfontscale.sh`,
+  `09-x7font-loop.sh`, `10-libxcvt.sh`, `11-pixman.sh`,
+  `12-xkeyboard-config.sh` allemaal groen. Alleen het allerlaatste
+  pakket van fase 3a, `13-xorg-server.sh`, faalde — dus fase 3a is nu
+  nog maar één fout verwijderd van volledig groen. Echte fout uit de
+  meson-configure-fase:
+  ```
+  Run-time dependency dri found: NO (tried pkgconfig)
+  ../include/meson.build:9:10: ERROR: Dependency "dri" not found, tried pkgconfig
+  ```
+  - **Root cause, gevonden door de daadwerkelijke bron van xorg-server te
+    downloaden en `meson.build`/`include/meson.build` te lezen (niet uit
+    het geheugen):** `include/meson.build:9` bevat letterlijk
+    `dri_dep = dependency('dri', required: build_glx)`, en
+    `meson.build:407` zet `build_glx = get_option('glx')` — een optie die
+    standaard op `true` staat (`meson_options.txt:25`). GLX (de
+    OpenGL-extensie voor X) staat dus impliciet aan, en dát trekt de
+    `dri`-pkgconfig-dependency (uit Mesa) verplicht binnen — ook al hadden
+    we `glamor=false` al bewust uitgezet. `glamor` en `glx` zijn twee
+    losse opties met elk hun eigen Mesa-koppeling.
+  - **Fix:** `-D glx=false` toegevoegd aan de meson-configure-aanroep in
+    `13-xorg-server.sh`, naast de bestaande `glamor=false` en
+    `systemd_logind=false`. Resultaat: een Xorg-server zonder enige
+    Mesa/GPU-afhankelijkheid, consistent met het generieke-hardware-doel.
+    (Ter controle ook de overige `dependency()`-aanroepen in
+    `meson.build`/`os/meson.build` nagelopen op vergelijkbare verplichte
+    koppelingen — `dbus` is al conditioneel op `systemd_logind` (dus al
+    goed), `secure-rpc`/`xdmcp`/`libunwind`/`xselinux` zijn allemaal
+    optioneel of stonden al niet aan; geen verdere verrassingen verwacht
+    bij dit pakket.)
+- **Structurele verbeteringen doorgevoerd (coordinator-verzoek), naast de
+  losse xorg-server-fix:**
+  1. **`-j4` i.p.v. `-j2`** in zowel `02-base-system/run-all.sh` als
+     `03-blfs-desktop/run-all.sh` — de eerdere `-j2`-voorzichtigheid was
+     gebaseerd op een inmiddels weerlegde OOM-aanname (de échte oorzaak
+     was de chown-tester-regel, zie eerdere entries). Wordt in de
+     eerstvolgende run in de praktijk getest.
+  2. **Derde cache-laag toegevoegd:** `lfs-xorg-complete-*` in
+     `.github/workflows/build-iso.yml`, naast de bestaande
+     `lfs-bootstrap-*` en `lfs-ch8-complete-*`. Zelfde tar-bestand-patroon,
+     hash nu ook over `scripts/03-blfs-desktop/**`. Zodra 03a een keer
+     succesvol gecached is, hoeft een latere fase-3-fout (XFCE-kern,
+     apps-laag) niet meer heel 03a te herbouwen.
+  3. BLUEPRINT.md's "Vast bouwpatroon per fase" bijgewerkt (punt 3 en 4)
+     om deze twee wijzigingen en hun onderbouwing vast te leggen.
+- **Volgende stap:** dit committen/pushen en herhalen — verwacht nu fase
+  3a (Xorg-basisbibliotheken + server) volledig groen te zien, mét de
+  nieuwe derde cache-laag succesvol opgeslagen. Daarna: begin van de
+  grondige BLFS-dependency-audit voor de resterende fase-3-pakketlijst
+  (GTK3/glib-stack + XFCE-core, 18 pakketten) tegen de officiële
+  Required/Recommended-tabellen, om het "één-dependency-per-CI-run"-
+  patroon niet te herhalen voor die grotere batch.

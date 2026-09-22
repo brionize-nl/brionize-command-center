@@ -23,13 +23,14 @@ export LFS=/mnt/lfs
 LOG_DIR="$LFS/sources"
 SKIP_BOOTSTRAP="${SKIP_BOOTSTRAP:-false}"
 SKIP_CH8="${SKIP_CH8:-false}"
-# -j$(nproc) liet hoofdstuk 8's GCC-rebuild abrupt stoppen zonder duidelijke
-# compiler-/make-foutmelding (run 35439085621) — geen OOM/schijfruimte-
-# bewijs in de eigen logs, maar wel het patroon van een externe kill
-# (plotselinge stop midden in nog actief parallelle compiles). GCC's
-# C++-bootstrap staat bekend als geheugenhongerig; minder parallelliteit
-# is een bekende, veilige mitigatie op resource-beperkte CI-runners.
-CHROOT_MAKE_JOBS="2"
+# Was eerder op 2 gezet uit voorzorg (vermoeden van een -j$(nproc)/OOM-
+# oorzaak bij een GCC-rebuild-crash, run 35439085621). Die aanname bleek
+# achteraf ONJUIST — de echte oorzaak was een losse `chown -R tester .`-regel
+# in 11 hoofdstuk-8-scripts die een niet-bestaande testsuite-gebruiker
+# aansprak (zie PROGRESS.md). Terug naar -j4 (de CI-runner heeft 4 cores) nu
+# er geen bewijs meer is dat parallelliteit zelf het probleem was; als dit
+# alsnog problemen geeft, is dat dan een nieuw, apart te onderzoeken feit.
+CHROOT_MAKE_JOBS="4"
 
 if [ "$SKIP_BOOTSTRAP" = "true" ]; then
   echo "==> SKIP_BOOTSTRAP=true: hoofdstuk 6 en de hoofdstuk-7-pakketten overgeslagen (cache-checkpoint hergebruikt)"

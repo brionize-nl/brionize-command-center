@@ -141,16 +141,25 @@ als iets al misgaat, maar het standaard vertrekpunt:
 3. **Checkpoints ook BINNEN een zware fase, niet alleen op de fasegrens.**
    Hoofdstuk 8 (~80 pakketten) had geen tussentijds checkpoint, waardoor
    elke mislukte poging weer bij pakket 1 van die fase begon. Fase 3 (Xorg
-   alléén al ~40+ pakketten) en fase 4 splitsen zichzelf op in meerdere
+   alléén al ~54 pakketten) en fase 4 splitsen zichzelf op in meerdere
    sub-checkpoints (bv. per logisch blok van 10-20 pakketten), niet pas
-   achteraf wanneer blijkt dat één blok te groot is.
-4. **`-j2` als standaard `MAKEFLAGS`/`TESTSUITEFLAGS`**, niet `-j$(nproc)`.
-   Ingesteld na een onverklaarde GCC-crash die destijds op een OOM-kill
-   leek — later bleek de échte oorzaak een vergeten `chown -R tester .`
-   (zie punt 6). `-j2` heeft dat dus waarschijnlijk niet zelf opgelost,
-   maar blijft staan als behoudende, bewezen-werkende standaard; er is
-   geen bewijs dat `-j$(nproc)` hier problemen geeft, alleen geen bewijs
-   dat het veilig is. Bewust niet terugveranderd zonder concrete reden.
+   achteraf wanneer blijkt dat één blok te groot is. Toegepast: een derde
+   cache-laag (`lfs-xorg-complete-*`, naast `lfs-bootstrap-*` en
+   `lfs-ch8-complete-*`) op de grens ná 03a (Xorg-basisbibliotheken +
+   server), zodat een fout dieper in fase 3 (XFCE-kern, apps-laag) niet
+   ook 03a opnieuw laat bouwen. Zelfde tar-bestand-i.p.v.-ruwe-map-patroon
+   als de eerdere twee lagen (zie punt 2). Vervolg-sub-fasen (GTK3/glib-
+   stack, XFCE-core, apps-laag) krijgen op dezelfde manier hun eigen laag
+   zodra ze bestaan, niet pas achteraf.
+4. **`-j4` als standaard `MAKEFLAGS`/`TESTSUITEFLAGS`** (de CI-runner heeft 4
+   cores). Was tijdelijk op `-j2` gezet na een onverklaarde GCC-crash die
+   destijds op een OOM-kill leek — de échte oorzaak bleek achteraf een
+   vergeten `chown -R tester .` (zie punt 6), niet parallelliteit. Met die
+   root cause bevestigd en gefixed, teruggezet naar `-j4` (2026-09-22,
+   `scripts/02-base-system/run-all.sh` en `scripts/03-blfs-desktop/run-all.sh`)
+   en in CI getest i.p.v. uit voorzorg laag te houden zonder bewijs. Blijkt
+   het alsnog problemen te geven, dan is dat een nieuw, apart te
+   onderzoeken feit — niet terugvallen op de oude aanname.
 5. **Workflow-trigger breed, niet per submap.** `on.push.paths` triggert nu
    op `scripts/**` (i.p.v. elke submap losse te noemen) — het "een submap
    vergeten toe te voegen"-probleem (`scripts/lib/**` ontbrak eerder) kan

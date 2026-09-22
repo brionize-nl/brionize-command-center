@@ -11,6 +11,14 @@
 # - '-D systemd_logind=true' vereist systemd-logind, dat we niet hebben
 #   (hoofdstuk 8 bouwde alleen udev uit systemd's broncode, geen volledige
 #   systemd/logind) — daarom 'systemd_logind=false'.
+# - '-D glx=false' (boek default: true, impliciet aan). Bron: xorg-server's
+#   eigen include/meson.build — "dri_dep = dependency('dri', required:
+#   build_glx)" — de pkgconfig-dependency 'dri' (uit Mesa) is ALLEEN
+#   verplicht wanneer GLX aan staat. Zonder Mesa (bewust, zie glamor
+#   hierboven) moet GLX dus ook uit, anders faalt de meson-configure hard
+#   op de ontbrekende 'dri'-pkgconfig-dependency. Gevonden door de
+#   letterlijke meson.build/meson_options.txt uit de brontarball te lezen
+#   (niet uit het geheugen of aannames).
 set -euo pipefail
 source "$(dirname "$0")/00-xorg-env.sh"
 cd /sources
@@ -24,6 +32,7 @@ meson setup .. \
   --prefix=$XORG_PREFIX \
   --localstatedir=/var \
   -D glamor=false \
+  -D glx=false \
   -D systemd_logind=false \
   -D xkb_output_dir=/var/lib/xkb
 ninja
