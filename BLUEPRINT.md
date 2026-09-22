@@ -334,6 +334,58 @@ als de eerdere drie, op de grens ná 03b — zodat een latere fout in
 XFCE-core (fase 3c) niet ook deze hele, zware stack (met name LLVM)
 opnieuw laat bouwen.
 
+## Fase 4 — devstack: voorbereidend onderzoek (2026-09-22)
+Uitgevoerd tijdens CI-wachttijd (fase 3b), op coordinator-verzoek —
+puur onderzoek, nog geen scripts. Officiële bronnen/versies vandaag
+geverifieerd (GitHub Releases-API's, npm-registry, officiële
+downloadpagina's — niet uit het geheugen; versienummers zullen tegen
+de tijd dat fase 4 echt gebouwd wordt opnieuw geverifieerd moeten
+worden, dit is een momentopname). Voorkeur "Official Route First"
+(§8.6 Matrix): prebuilt officiële Linux-x86_64-binaries/tarballs boven
+zelf compileren, waar dat de normale distributievorm is.
+
+- **Node.js** — huidige LTS: **v24.21.0** ("Krypton"), via
+  `nodejs.org/dist/index.json`. Officiële prebuilt tarball:
+  `https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-x64.tar.xz`
+  (bevestigd bereikbaar, HTTP 200) — uitpakken en op PATH zetten, geen
+  package manager nodig.
+- **Bun** — huidige versie: **v1.4.2**, via GitHub Releases
+  (`oven-sh/bun`). Prebuilt: `bun-linux-x64.zip` (ook musl/baseline-
+  varianten beschikbaar voor oudere CPU's).
+- **Python** — al aanwezig (hoofdstuk 8, Python 3.13.7 uit LFS zelf) —
+  geen aparte fase-4-stap nodig.
+- **PostgreSQL** — huidige versie: **17.6**. Twee routes onderzocht:
+  (a) BLFS's eigen bouwpagina (`server/postgresql.html`, bron
+  `https://ftp.postgresql.org/pub/source/v17.6/postgresql-17.6.tar.bz2`)
+  — consistent met de rest van dit LFS-systeem (geen package manager,
+  eigen user/group-conventies, geen systemd-afhankelijkheid); (b)
+  EnterpriseDB's prebuilt generic-Linux-binaries — bestaan, maar de
+  exacte downloadpad/bestandsnaam moet bij het echte bouwmoment opnieuw
+  opgezocht worden (een geraden pad gaf een 403, dus niet zomaar
+  hardcoden). **Voorlopige voorkeur: BLFS-bouwpagina**, zelfde
+  discipline als fase 2/3.
+- **Supabase CLI** — huidige versie: **v2.117.0**, via GitHub Releases
+  (`supabase/cli`). Prebuilt: `supabase_2.117.0_linux_amd64.tar.gz`.
+- **gh (GitHub CLI)** — huidige versie: **v2.101.0**, via GitHub
+  Releases (`cli/cli`). Prebuilt: `gh_2.101.0_linux_amd64.tar.gz`.
+- **n8n** — huidige versie: **2.40.5**, via npm-registry. Geen
+  losstaande generic-Linux-binary — normale distributie is
+  `npm install -g n8n` (heeft dus Node.js nodig, hierboven).
+- **Tailscale** — huidige versie: **1.102.4**, via
+  `pkgs.tailscale.com/stable/?mode=json` (officiële JSON-feed, geen
+  giswerk nodig). Prebuilt: `tailscale_1.102.4_amd64.tgz`.
+- **cloudflared** — huidige versie: **2026.9.1**, via GitHub Releases
+  (`cloudflare/cloudflared`). Prebuilt: `cloudflared-linux-amd64`
+  (los binary, geen tarball).
+- **PM2** — huidige versie: **7.0.4**, via npm-registry. Net als n8n:
+  `npm install -g pm2`, heeft Node.js nodig.
+
+**Nog niet gedaan (bewust, hoort bij het echte fase-4-bouwmoment):**
+MD5/checksum-verificatie per bestand (voor `fetch_verified()`), exacte
+installatiescripts, PWA-snelkoppelingen-onderzoek, en een her-check van
+alle versienummers hierboven (kunnen tegen die tijd alweer verouderd
+zijn — dit is nadrukkelijk een momentopname, geen bevroren besluit).
+
 ## Security / Secrets (grondregel, niet-onderhandelbaar)
 - **Nooit hardcoded secrets, accounts of persoonlijke data in de repo** —
   ook niet tijdens de publieke periode.
