@@ -705,9 +705,29 @@
     "Recommended", bewust niet gebouwd).
   - **Fix:** `-D man-pages=disabled` — geen man-pages nodig voor een
     werkend systeem.
-- **Volgende stap:** dit committen/pushen en herhalen. Verwacht nu een
-  xorg-complete-cache-HIT (03a overgeslagen, snel) gevolgd door een
-  langere 03b-build (LLVM). Root-cause-discipline blijft hetzelfde: bij
-  een fout de echte log induiken, geen fixes gokken. Zodra 03b groen
-  is: fase 3c (XFCE-core, 17 pakketten, volgorde al vastgelegd in
+- **man-pages-fix bevestigd: de hele circulaire GLib/HarfBuzz/FreeType/
+  Fontconfig-bootstrapketen werkt in één keer goed.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35733038135
+  (job 106763155869): xorg-complete-cache was nu wél een hit (03a
+  overgeslagen, zoals verwacht). 03b liep foutloos door van pcre2 t/m
+  Pango (19 pakketten) — inclusief de twee lastigste, nieuw-ontworpen
+  stappen (GLib in drie stappen, FreeType/Fontconfig-herbouw na
+  HarfBuzz) zonder enige correctie nodig. Faalde daarna op `20-cmake.sh`:
+  ```
+  CMake Error at Source/Modules/CMakeBuildUtilities.cmake:142 (message):
+    CMAKE_USE_SYSTEM_CURL is ON but a curl is not found!
+  ```
+  - **Root cause:** `--system-libs` in CMake's bootstrap-commando (boek-
+    standaard) probeert te linken tegen systeem-cURL/libarchive/libuv/
+    nghttp2 — allemaal alleen "Recommended" voor CMake, bewust niet
+    gebouwd.
+  - **Fix:** `--system-libs` (en de nu overbodige --no-system-*-
+    uitzonderingen) verwijderd — CMake bundelt deze bibliotheken dan
+    intern, geen extra pakketten nodig.
+- **Volgende stap:** dit committen/pushen en herhalen. Verwacht nu
+  opnieuw een xorg-complete-cache-HIT (geen 03a/run-all.sh-wijziging
+  deze keer), gevolgd door verder in 03b — cmake, libjpeg-turbo,
+  gdk-pixbuf, at-spi2-core, dan het zware LLVM/Mesa/libepoxy/GTK3-
+  slotstuk. Root-cause-discipline blijft hetzelfde. Zodra 03b groen is:
+  fase 3c (XFCE-core, 17 pakketten, volgorde al vastgelegd in
   BLUEPRINT.md) scripten.
