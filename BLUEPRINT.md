@@ -249,16 +249,18 @@ beurt als deze BLUEPRINT-update.
 - Geen API-keys of tokens in de workflow-yml.
 
 ## Nog open / bekende risico's
-- **Fase 2 (LFS hoofdstuk 6, 7 én 8 — temporary tools, chroot, het volledige
-  basissysteem van ~100 pakketten) is volledig bewezen binnen GitHub
-  Actions:** 1u9m29s met bootstrap-cache-hit (zie PROGRESS.md, run
-  35469074012) — ruim binnen de 6-uur-limiet. Voor fase 3-4 (XFCE-desktop,
-  devstack) is dit nog niet bewezen; die zijn zwaarder (Xorg alleen al
-  ~40+ pakketten, XFCE-core 18, plus GTK3/glib-stack). Mitigatie
-  (checkpoints/cache al VANAF de eerste fase-3-stap, niet pas achteraf —
-  zie "Vast bouwpatroon per fase") staat, wordt per fase opnieuw getoetst.
-- Exacte pakketlijst/versies voor de BLFS-desktopstack nog niet in detail
-  uitgewerkt.
+- **Fase 2 (LFS hoofdstuk 6, 7 én 8) en fase 3a (Xorg-basisbibliotheken +
+  server, 54 pakketten) zijn beide volledig bewezen binnen GitHub
+  Actions**, elk met een eigen cache-laag (bootstrap/ch8-complete/
+  xorg-complete). Laatste volledige groene run met alle drie de lagen
+  bewezen: 11m28s (run 35726410887). Voor fase 3b/3c (Mesa/GTK3-stack,
+  XFCE-core) en fase 4 (devstack) is dit nog niet bewezen — die zijn
+  zwaarder. Mitigatie (checkpoints/cache al VANAF de eerste stap, niet
+  pas achteraf) staat en werkt aantoonbaar goed (zie "Vast bouwpatroon
+  per fase"), wordt per fase opnieuw getoetst.
+- Exacte pakketlijst/versies voor XFCE-core + GTK3-supporting-stack zijn
+  nu wel uitgewerkt (zie "Dependency-audit fase 3b/3c" hierboven), maar
+  nog niet omgezet naar daadwerkelijke bouwscripts.
 - Window-tiling-implementatie (devilspie2/wmctrl) voor de live app-tegels
   nog niet in detail uitgewerkt.
 

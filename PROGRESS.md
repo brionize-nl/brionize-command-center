@@ -646,8 +646,21 @@
     pakket dat los staat van de eerdere Mesa/GTK3-architectuurvraag.
   - **Fix:** Libdrm-2.4.125 toegevoegd als `12a-libdrm.sh` (meson-build,
     letterlijk van de officiële BLFS-pagina), vóór `13-xorg-server.sh`.
-- **Volgende stap:** dit committen/pushen en herhalen — verwacht nu fase
-  3a (Xorg-basisbibliotheken + server) volledig groen te zien, mét de
-  derde cache-laag (xorg-complete) succesvol opgeslagen. Daarna: Mesa
-  (llvmpipe-only) + de GTK3-supporting-stack scripten als nieuwe
-  sub-fase 03b, met dezelfde audit-eerst-discipline.
+- **MIJLPAAL: fase 3a (Xorg-basisbibliotheken + server) volledig groen,
+  libdrm-fix bevestigd.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35726410887
+  (11m28s totaal, bootstrap+ch8-cache beide hit, xorg-complete-cache voor
+  het eerst succesvol gebouwd+opgeslagen). Alle drie de cache-lagen nu
+  bewezen. Dit sluit de reeks van vijf losse, in CI-logs geverifieerde
+  ontbrekende-dependency-fixes af die nodig bleken sinds de eerste
+  fase-3-poging: freetype, fontconfig, mkfontscale, xorg-server
+  glx/secure-rpc, libdrm — stuk voor stuk gevonden via de echte
+  configure-/build-foutmelding, nooit gegokt.
+- **Volgende stap:** de nieuwe sub-fase 03b (Mesa llvmpipe-only + de
+  GTK3-supporting-stack: at-spi2-core, gdk-pixbuf, libepoxy, Pango,
+  GLib+GObject-Introspection, Cairo, harfbuzz, fribidi, plus Mesa's
+  eigen LLVM/libdrm(al aanwezig)/Mako/PyYAML-vereisten) scripten, met
+  dezelfde audit-eerst-discipline als bij het XFCE-core-onderzoek
+  hierboven — niet meer per CI-run ontdekken. Eigen SKIP_-vlag en
+  vierde cache-laag (`lfs-mesa-complete-*` oid.) volgens hetzelfde
+  patroon vanaf het eerste script.
