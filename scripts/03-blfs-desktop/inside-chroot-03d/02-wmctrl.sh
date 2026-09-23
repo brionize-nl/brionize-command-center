@@ -5,7 +5,7 @@
 # libXmu al aanwezig uit 03a).
 set -euo pipefail
 cd /sources
-tar -xf wmctrl-1.07.tar.gz
+tar -xf wmctrl-1.07.tar
 cd wmctrl-1.07
 
 ./configure --prefix=/usr

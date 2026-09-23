@@ -913,7 +913,30 @@
   Zesde CI-cache-laag toegevoegd; de drie bestaande 03a/03b/03c-
   workflow-stappen proactief voorzien van `SKIP_XFCE_EXTRAS=true`
   (dezelfde les als de eerdere 03c-scoping-bug).
-- **Volgende stap:** dit committen/pushen en de eerste 03d-run
-  afwachten. Verwacht cache-hits op alle vijf bovenliggende lagen
-  (niets daarin gewijzigd), dus een relatief snelle build van alleen
-  de nieuwe 03d-pakketten. Root-cause-discipline blijft hetzelfde.
+- **Eerste 03d-run: Lua meteen groen, wmctrl faalt op een tar-
+  extensie-eigenaardigheid.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35841414377:
+  alle vijf bovenliggende sub-fasen (03a/03b/03c) herbouwden foutloos
+  (verwachte cache-miss door de run-all.sh-wijziging) EN bleven dit
+  keer correct gescopet — de proactieve SKIP_XFCE_EXTRAS-fix werkte,
+  geen herhaling van de eerdere 03c-scoping-bug. `01-lua.sh` slaagde
+  meteen. `02-wmctrl.sh` faalde met:
+  ```
+  gzip: stdin: not in gzip format
+  tar: Child returned status 1
+  ```
+  - **Root cause:** de Wayback-capture van wmctrl-1.07 is feitelijk een
+    kaal, ongecomprimeerd tar-archief (geen gzip-magic-bytes) — al
+    eerder lokaal bevestigd tijdens onderzoek. De MD5-check in
+    `fetch_verified()` slaagde gewoon (zelfde bytes als lokaal
+    geverifieerd), maar `tar -xf wmctrl-1.07.tar.gz` probeerde alsnog
+    gzip te ontleden puur op basis van de `.gz`-bestandsnaam-extensie
+    en faalde daarop.
+  - **Fix:** lokale bestandsnaam veranderd naar `wmctrl-1.07.tar`
+    (zonder `.gz`) — de URL blijft ongewijzigd (`fetch_verified()`
+    koppelt bestandsnaam en URL niet hard aan elkaar), alleen de lokale
+    cache-/extractie-naam. `tar -xf` detecteert dan correct op
+    inhoud i.p.v. op extensie.
+- **Volgende stap:** dit committen/pushen en herhalen. Verwacht opnieuw
+  cache-hits op de vijf bovenliggende lagen, dus een snelle iteratie op
+  alleen 03d.

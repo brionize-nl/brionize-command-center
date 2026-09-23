@@ -18,7 +18,13 @@ declare -A URLS=(
 
   # wmctrl — oorspronkelijke site (tripie.sweb.cz) is dood; via Wayback
   # Machine (zelfde bewezen fallback als bij ncurses eerder dit project).
-  [wmctrl-1.07.tar.gz]="http://web.archive.org/web/20221116085402/http://tripie.sweb.cz/utils/wmctrl/dist/wmctrl-1.07.tar.gz"
+  # NB: lokale bestandsnaam bewust ZONDER ".gz" (ondanks de .gz-URL) —
+  # de Wayback-capture blijkt feitelijk een kaal, ongecomprimeerd
+  # tar-archief te zijn (geen gzip-magic-bytes). Met de ".gz"-naam
+  # behouden probeert `tar -xf` alsnog gzip te ontleden (extensie-
+  # gebaseerde dispatch) en faalt met "not in gzip format" — bevestigd
+  # in CI-log, niet gegokt.
+  [wmctrl-1.07.tar]="http://web.archive.org/web/20221116085402/http://tripie.sweb.cz/utils/wmctrl/dist/wmctrl-1.07.tar.gz"
 
   # devilspie2 — officiële GitHub-tag van de hoofdontwikkelaar (gusnan).
   [devilspie2-0.36.tar.gz]="https://github.com/gusnan/devilspie2/archive/refs/tags/v0.36.tar.gz"
@@ -30,7 +36,7 @@ declare -A URLS=(
 declare -A MD5=(
   [lua-5.4.8.tar.gz]="81cf5265b8634967d8a7480d238168ce"
   [lua-5.4.8-shared_library-1.patch]="dd9bafa25310f188f711b2670275e0cc"
-  [wmctrl-1.07.tar.gz]="264fcc6a33b8309c6a32f41b29615b23"
+  [wmctrl-1.07.tar]="264fcc6a33b8309c6a32f41b29615b23"
   [devilspie2-0.36.tar.gz]="f25ee9078c033e47d93a76d5cb44968d"
   [conky-1.24.2.tar.gz]="2bac15f09ab48d8360a4f1e66ff3c2b8"
 )
