@@ -395,18 +395,19 @@ zijn — dit is nadrukkelijk een momentopname, geen bevroren besluit).
 - Geen API-keys of tokens in de workflow-yml.
 
 ## Nog open / bekende risico's
-- **Fase 2 (LFS hoofdstuk 6, 7 én 8) en fase 3a (Xorg-basisbibliotheken +
-  server, 54 pakketten) zijn beide volledig bewezen binnen GitHub
-  Actions**, elk met een eigen cache-laag (bootstrap/ch8-complete/
-  xorg-complete). Laatste volledige groene run met alle drie de lagen
-  bewezen: 11m28s (run 35726410887). Voor fase 3b/3c (Mesa/GTK3-stack,
-  XFCE-core) en fase 4 (devstack) is dit nog niet bewezen — die zijn
-  zwaarder. Mitigatie (checkpoints/cache al VANAF de eerste stap, niet
-  pas achteraf) staat en werkt aantoonbaar goed (zie "Vast bouwpatroon
-  per fase"), wordt per fase opnieuw getoetst.
-- Exacte pakketlijst/versies voor XFCE-core + GTK3-supporting-stack zijn
-  nu wel uitgewerkt (zie "Dependency-audit fase 3b/3c" hierboven), maar
-  nog niet omgezet naar daadwerkelijke bouwscripts.
+- **Fase 2 (LFS hoofdstuk 6, 7 én 8), fase 3a (Xorg-basisbibliotheken +
+  server, 54 pakketten) én fase 3b (GTK3-supporting-stack incl. het
+  bewust minimale LLVM/Mesa-llvmpipe-duo, 27 pakketten) zijn nu allemaal
+  volledig bewezen binnen GitHub Actions**, elk met een eigen cache-laag
+  (bootstrap/ch8-complete/xorg-complete/gtk3-complete — vier lagen,
+  allemaal samen bewezen in run 35795928749, 1u20m28s totaal). Voor
+  fase 3c (XFCE-core) en fase 4 (devstack) is dit nog niet bewezen.
+  Mitigatie (checkpoints/cache al VANAF de eerste stap, niet pas
+  achteraf) staat en werkt aantoonbaar goed (zie "Vast bouwpatroon per
+  fase"), wordt per fase opnieuw getoetst.
+- Exacte pakketlijst/versies voor XFCE-core zijn al uitgewerkt (zie
+  "Dependency-audit fase 3b/3c" hierboven), maar nog niet omgezet naar
+  daadwerkelijke bouwscripts.
 - Window-tiling-implementatie (devilspie2/wmctrl) voor de live app-tegels
   nog niet in detail uitgewerkt.
 

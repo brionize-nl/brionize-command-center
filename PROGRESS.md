@@ -789,7 +789,23 @@
   - **Fix:** `-D man=false` i.p.v. `man=true` — geen man-pages nodig
     voor een werkend systeem, geen nieuw pakket (libxslt) erbij nodig
     voor deze ene, niet-functionele feature.
-- **Volgende stap:** dit committen/pushen en herhalen. Als dit slaagt is
-  fase 3b (27 pakketten, GTK3-supporting-stack compleet inclusief het
-  zware LLVM/Mesa-duo) VOLLEDIG groen — de laatste horde vóór fase 3c
-  (XFCE-core, 17 pakketten, volgorde al vastgelegd in BLUEPRINT.md).
+- **MIJLPAAL: fase 3b (GTK3-supporting-stack, 27 pakketten) volledig
+  groen — man=false-fix bevestigd.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35795928749
+  (1u20m28s totaal, bootstrap/ch8-complete/xorg-complete allemaal hit,
+  gtk3-complete-cache voor het eerst succesvol gebouwd+opgeslagen).
+  Alle vier cache-lagen nu bewezen samen te werken. Base-system-
+  artifact succesvol geüpload. Dit sluit de reeks van zeven losse,
+  CI-log-geverifieerde fixes af die nodig bleken sinds de eerste
+  03b-poging: man-pages=disabled (GLib), --system-libs weg (CMake),
+  man=false (gdk-pixbuf), docutils toegevoegd (root-cause voor
+  rst2man), wayland_backend=false (GTK3/xkbcommon), man=false (GTK3/
+  xsltproc) — stuk voor stuk gevonden via de echte configure-
+  foutmelding of de daadwerkelijke pakketbron, nooit gegokt. Fase 1
+  t/m 3b (LFS hoofdstuk 5-8, Xorg-basis, en de volledige GTK3-stack
+  incl. het bewust minimale LLVM/Mesa-llvmpipe-duo) is nu VOLLEDIG
+  bewezen binnen GitHub Actions.
+- **Volgende stap:** fase 3c (XFCE-core, 17 pakketten, volgorde en
+  externe dependencies al vastgelegd in BLUEPRINT.md's eerdere
+  dependency-audit) scripten, met dezelfde audit-eerst-discipline en
+  een vijfde cache-laag op de grens ná 03c.
