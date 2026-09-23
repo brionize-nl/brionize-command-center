@@ -16,6 +16,12 @@
 #   hier expliciet herhaald voor duidelijkheid/toekomstvastheid.
 # 'find_package(Lua "5.3" REQUIRED)' is ONVOORWAARDELIJK (niet
 # uitschakelbaar) — Lua-5.4.8 (vorige stap) voldoet aan ">=5.3".
+# '-D RELEASE=ON' (boek/CMake-default: OFF) — zonder deze vlag eist
+# cmake/Conky.cmake regel 182 het `git`-commando (voor een
+# git-describe-versiestring), puur omdat we NIET vanuit een git-
+# checkout bouwen maar vanuit een gedownloade release-tarball. `git`
+# zelf is niet gebouwd (groot pakket, alleen hiervoor nodig) — RELEASE=ON
+# is precies de door Conky zelf bedoelde vlag voor exact dit scenario.
 set -euo pipefail
 cd /sources
 tar -xf conky-1.24.2.tar.gz
@@ -33,6 +39,7 @@ cd build
 
 cmake -D CMAKE_INSTALL_PREFIX=/usr \
     -D CMAKE_BUILD_TYPE=Release  \
+    -D RELEASE=ON                \
     -D BUILD_WAYLAND=OFF         \
     -D BUILD_X11=ON              \
     -D BUILD_XFT=ON              \

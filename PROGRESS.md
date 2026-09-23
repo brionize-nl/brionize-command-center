@@ -954,5 +954,29 @@
     macro-expansie (`"'tostring'"` / `"'print'"`) via sed — lokaal
     getest tegen de daadwerkelijke broncode vóór het pushen: de
     substitutie is exact, 0 LUA_QL-voorkomens blijven over.
+- **devilspie2-fix bevestigd: devilspie2 slaagt nu (de lokaal geteste
+  sed-substitutie klopte).** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35852647437:
+  Lua, wmctrl en devilspie2 alledrie groen. `04-conky.sh` faalde op:
+  ```
+  CMake Error at cmake/Conky.cmake:182 (message):
+    Unable to find program 'git'
+  ```
+  - **Root cause, gevonden door Conky's eigen `cmake/Conky.cmake` te
+    downloaden en te lezen:** de git-vereiste zit binnen
+    `if(NOT RELEASE) ... endif()` — `RELEASE` staat standaard uit
+    (`option(RELEASE "Build release package" false)`). Git zelf wordt
+    alleen gebruikt om een `git describe`-achtige versiestring te
+    genereren bij een dev-checkout; wij bouwen vanaf een gedownloade
+    release-tarball, precies het scenario waar de `RELEASE`-vlag voor
+    bedoeld is.
+  - **Fix:** `-D RELEASE=ON` toegevoegd. (Er staat verderop in
+    Conky.cmake nog een ongeconditioneerde `execute_process(COMMAND
+    ${APP_GIT} rev-parse ...)`-aanroep die bij RELEASE=ON een lege
+    APP_GIT-variabele krijgt — volgens de CMake-logica zou dit een
+    onschadelijke mislukte execute_process opleveren zonder de
+    configure te laten crashen, aangezien de resulterende
+    GIT_SHORT_SHA in de RELEASE-tak niet gebruikt wordt. Nog te
+    bevestigen in de volgende run.)
 - **Volgende stap:** dit committen/pushen en herhalen. Verwacht opnieuw
   cache-hits op de vijf bovenliggende lagen.
