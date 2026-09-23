@@ -937,6 +937,22 @@
     koppelt bestandsnaam en URL niet hard aan elkaar), alleen de lokale
     cache-/extractie-naam. `tar -xf` detecteert dan correct op
     inhoud i.p.v. op extensie.
+- **wmctrl-fix bevestigd: wmctrl slaagt nu.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35851863972:
+  alle vijf bovenliggende lagen waren hit (snelle run). `01-lua.sh` en
+  `02-wmctrl.sh` beide groen. `03-devilspie2.sh` faalde op een
+  bron-compatibiliteitsprobleem:
+  ```
+  src/script_functions.c:499:48: error: implicit declaration of function 'LUA_QL'
+  ```
+  - **Root cause:** devilspie2 dateert uit het Lua-5.1-tijdperk en
+    gebruikt de macro `LUA_QL()` — verwijderd sinds Lua 5.3 (wij bouwen
+    tegen Lua 5.4.8). `LUA_QL(x)` breidde vroeger simpelweg uit naar
+    `"'" x "'"`.
+  - **Fix:** de twee (enige, met `grep` geverifieerd) aanroepen in
+    `src/script_functions.c` letterlijk vervangen door hun oude
+    macro-expansie (`"'tostring'"` / `"'print'"`) via sed — lokaal
+    getest tegen de daadwerkelijke broncode vóór het pushen: de
+    substitutie is exact, 0 LUA_QL-voorkomens blijven over.
 - **Volgende stap:** dit committen/pushen en herhalen. Verwacht opnieuw
-  cache-hits op de vijf bovenliggende lagen, dus een snelle iteratie op
-  alleen 03d.
+  cache-hits op de vijf bovenliggende lagen.
