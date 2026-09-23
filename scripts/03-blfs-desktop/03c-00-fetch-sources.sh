@@ -29,6 +29,14 @@ declare -A URLS=(
   # om te omzeilen zoals eerder bij GLib/gdk-pixbuf/GTK3's man-pages).
   [libxslt-1.1.43.tar.xz]="https://download.gnome.org/sources/libxslt/1.1/libxslt-1.1.43.tar.xz"
 
+  # iceauth — nodig voor xfce4-session ("iceauth missing, please check
+  # your X11 installation"). Losstaand uit de x7app.html-batch (33
+  # pakketten, met als aggregate "Required" o.a. Mesa) getrokken —
+  # zelfde bewuste, minimale-footprint-aanpak als eerder bij
+  # mkfontscale (03a). Heeft zelf alleen libICE/libSM nodig, al
+  # aanwezig uit 03a's x7lib-lus.
+  [iceauth-1.0.10.tar.xz]="https://www.x.org/pub/individual/app/iceauth-1.0.10.tar.xz"
+
   # XFCE-core (17 pakketten, exacte bouwvolgorde in inside-chroot-03c/run-all.sh)
   [libxfce4util-4.20.1.tar.bz2]="https://archive.xfce.org/src/xfce/libxfce4util/4.20/libxfce4util-4.20.1.tar.bz2"
   [xfconf-4.20.0.tar.bz2]="https://archive.xfce.org/src/xfce/xfconf/4.20/xfconf-4.20.0.tar.bz2"
@@ -59,6 +67,7 @@ declare -A MD5=(
   [lxde-icon-theme-0.5.1.tar.xz]="7467133275edbbcc79349379235d4411"
   [libnotify-0.8.6.tar.xz]="09bce743badbe1c180ce14d92539afb9"
   [libxslt-1.1.43.tar.xz]="5dc0179c81be7a3082b43030ecfdebd4"
+  [iceauth-1.0.10.tar.xz]="30f898d71a7d8e817302970f1976198c"
 
   [libxfce4util-4.20.1.tar.bz2]="8e30b7735333f74d80c379e15d9da145"
   [xfconf-4.20.0.tar.bz2]="ca596ff0a9be7fa655bb09cb05458644"

@@ -17,6 +17,7 @@ STEPS=(
   "00g-lxde-icon-theme.sh"
   "00h-libnotify.sh"
   "00i-libxslt.sh"
+  "00j-iceauth.sh"
   "01-libxfce4util.sh"
   "02-xfconf.sh"
   "03-libxfce4ui.sh"

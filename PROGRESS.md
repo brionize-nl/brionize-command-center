@@ -860,7 +860,26 @@
     configure-vereiste.
   - **Fix:** libxslt-1.1.43 toegevoegd als `00i-libxslt.sh` (Required:
     libxml2, al aanwezig uit 03b), vóór xfce4-dev-tools.
-- **Volgende stap:** dit committen/pushen en herhalen. Verwacht nu
-  cache-hits op bootstrap/ch8-complete/xorg-complete/gtk3-complete
-  (niets daarin gewijzigd deze keer), dus een relatief snelle build van
-  alleen de resterende 03c-pakketten.
+- **libxslt-fix bevestigd: 16 van de 17 XFCE-core-pakketten nu groen in
+  één moeite door.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35810348749:
+  alle vier bovenliggende cache-lagen waren hit (snelle run), en 03c
+  liep foutloos van xfce4-dev-tools t/m xfwm4 (16 van de 17 pakketten +
+  alle 9 externe dependencies). Alleen het allerlaatste pakket,
+  xfce4-session, faalde:
+  ```
+  configure: error: iceauth missing, please check your X11 installation
+  ```
+  - **Root cause:** xfce4-session heeft het `iceauth`-commando nodig
+    voor ICE-sessiebeheer. Zit, net als mkfontscale destijds, in de
+    x7app.html-batch (33 Xorg-hulpprogramma's met Mesa als aggregate
+    dependency) — niet losstaand gebouwd.
+  - **Fix:** iceauth-1.0.10 losstaand toegevoegd als `00j-iceauth.sh`
+    (zelfde bewuste aanpak als mkfontscale: niet de hele x7app-batch,
+    alleen dit ene commando; heeft zelf alleen libICE/libSM nodig, al
+    aanwezig uit 03a).
+- **Volgende stap:** dit committen/pushen en herhalen. Als dit slaagt
+  is fase 3c (XFCE-core, 17 pakketten + 9 externe dependencies)
+  VOLLEDIG groen — daarmee is heel fase 3 (Xorg-basis + GTK3-stack +
+  XFCE-core) bewezen. Daarna: Conky-HUD, window-tiling en de 3
+  werkbladen/hotkeys uitwerken, of fase 4 (devstack) oppakken.
