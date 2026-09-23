@@ -238,6 +238,51 @@ jobs:
           path: ${{ runner.temp }}/lfs-gtk3-complete-cache.tar.zst
           key: lfs-gtk3-complete-${{ hashFiles('docker/Dockerfile.build', 'scripts/01-toolchain/**', 'scripts/02-base-system/run-all.sh', 'scripts/02-base-system/ch6-*.sh', 'scripts/02-base-system/ch7-*.sh', 'scripts/02-base-system/ch8-00-fetch-sources.sh', 'scripts/02-base-system/inside-chroot/**', 'scripts/02-base-system/inside-chroot-ch8/**', 'scripts/03-blfs-desktop/run-all.sh', 'scripts/03-blfs-desktop/03a-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03a/**', 'scripts/03-blfs-desktop/03b-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03b/**', 'scripts/lib/**') }}
 
+      - name: XFCE-core-complete-cache herstellen (indien beschikbaar)
+        # Vijfde cache-laag: alles hierboven + fase 3c (XFCE-core, 17
+        # pakketten + externe dependencies). Zonder dit zou elke latere
+        # fase-3-iteratie (apps-laag) ook 03c opnieuw moeten bouwen.
+        # Zelfde tar-bestand-aanpak als de eerdere vier lagen.
+        id: lfs-xfce-core-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/lfs-xfce-core-complete-cache.tar.zst
+          key: lfs-xfce-core-complete-${{ hashFiles('docker/Dockerfile.build', 'scripts/01-toolchain/**', 'scripts/02-base-system/run-all.sh', 'scripts/02-base-system/ch6-*.sh', 'scripts/02-base-system/ch7-*.sh', 'scripts/02-base-system/ch8-00-fetch-sources.sh', 'scripts/02-base-system/inside-chroot/**', 'scripts/02-base-system/inside-chroot-ch8/**', 'scripts/03-blfs-desktop/run-all.sh', 'scripts/03-blfs-desktop/03a-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03a/**', 'scripts/03-blfs-desktop/03b-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03b/**', 'scripts/03-blfs-desktop/03c-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03c/**', 'scripts/lib/**') }}
+
+      - name: Fase 3c (XFCE-core) bouwen (of cache hergebruiken)
+        # SKIP_XORG=true + SKIP_GTK3_STACK=true bij een cache-miss: 03a
+        # en 03b zijn al aanwezig (vorige stappen), deze docker-run
+        # bouwt hier bewust ALLEEN 03c.
+        run: |
+          if [ "${{ steps.lfs-xfce-core-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "==> Cache-hit: hash van fase 1 t/m 03c ongewijzigd — uitpakken i.p.v. herbouwen (03c overgeslagen)."
+            sudo rm -rf "$RUNNER_TEMP/lfs"
+            mkdir -p "$RUNNER_TEMP/lfs"
+            sudo tar --zstd -xpf "$RUNNER_TEMP/lfs-xfce-core-complete-cache.tar.zst" -C "$RUNNER_TEMP/lfs"
+          else
+            echo "==> Cache-miss: 03c (XFCE-core) nog bouwen."
+            docker run --rm --privileged \
+              -v "$RUNNER_TEMP/lfs:/mnt/lfs" \
+              -v "$GITHUB_WORKSPACE/scripts:/opt/lfs/scripts:ro" \
+              -e SKIP_XORG=true \
+              -e SKIP_GTK3_STACK=true \
+              brionize-lfs-toolchain:latest \
+              bash -c "bash /opt/lfs/scripts/03-blfs-desktop/run-all.sh"
+          fi
+
+      - name: XFCE-core-complete-cache-archief bouwen (alleen bij cache-miss)
+        if: steps.lfs-xfce-core-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo tar --zstd -cpf "$RUNNER_TEMP/lfs-xfce-core-complete-cache.tar.zst" -C "$RUNNER_TEMP/lfs" .
+          sudo chown "$(id -u):$(id -g)" "$RUNNER_TEMP/lfs-xfce-core-complete-cache.tar.zst"
+
+      - name: XFCE-core-complete-cache opslaan (alleen bij cache-miss)
+        if: steps.lfs-xfce-core-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/lfs-xfce-core-complete-cache.tar.zst
+          key: lfs-xfce-core-complete-${{ hashFiles('docker/Dockerfile.build', 'scripts/01-toolchain/**', 'scripts/02-base-system/run-all.sh', 'scripts/02-base-system/ch6-*.sh', 'scripts/02-base-system/ch7-*.sh', 'scripts/02-base-system/ch8-00-fetch-sources.sh', 'scripts/02-base-system/inside-chroot/**', 'scripts/02-base-system/inside-chroot-ch8/**', 'scripts/03-blfs-desktop/run-all.sh', 'scripts/03-blfs-desktop/03a-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03a/**', 'scripts/03-blfs-desktop/03b-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03b/**', 'scripts/03-blfs-desktop/03c-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03c/**', 'scripts/lib/**') }}
+
       - name: Logs uploaden (ook bij falen)
         if: always()
         uses: actions/upload-artifact@v4

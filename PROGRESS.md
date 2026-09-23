@@ -805,7 +805,19 @@
   t/m 3b (LFS hoofdstuk 5-8, Xorg-basis, en de volledige GTK3-stack
   incl. het bewust minimale LLVM/Mesa-llvmpipe-duo) is nu VOLLEDIG
   bewezen binnen GitHub Actions.
-- **Volgende stap:** fase 3c (XFCE-core, 17 pakketten, volgorde en
-  externe dependencies al vastgelegd in BLUEPRINT.md's eerdere
-  dependency-audit) scripten, met dezelfde audit-eerst-discipline en
-  een vijfde cache-laag op de grens ná 03c.
+- **Fase 3c volledig gescript: 17 XFCE-core-pakketten + 8 externe
+  dependencies, audit-eerst.** Bij het daadwerkelijk uitwerken bleek
+  één extra, niet eerder opgemerkte dependency (hwdata, Required voor
+  libdisplay-info) — verder klopte de eerdere audit. Alle 25
+  tarball-extractiemappen vooraf geverifieerd (zelfde spot-check-
+  methode als bij 03a/03b) — geen afwijkingen dit keer. Bewuste keuze:
+  LXDE Icon Theme i.p.v. gnome-icon-theme (lichter, BLFS-pagina voor
+  gnome-icon-theme niet gevonden). Vijfde CI-cache-laag
+  (`lfs-xfce-core-complete-*`) toegevoegd, zelfde patroon als de
+  eerdere vier: 03a/03b/03c zijn nu drie losse, apart gecachete
+  docker-run-stappen binnen dezelfde workflow-job.
+- **Volgende stap:** dit committen/pushen en de eerste 03c-run
+  afwachten. Verwacht cache-hits op bootstrap/ch8-complete/xorg-
+  complete/gtk3-complete (niets daarin gewijzigd), dus een relatief
+  snelle build van alleen de 25 nieuwe 03c-pakketten. Root-cause-
+  discipline blijft hetzelfde.

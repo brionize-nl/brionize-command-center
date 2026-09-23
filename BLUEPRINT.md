@@ -152,9 +152,12 @@ als iets al misgaat, maar het standaard vertrekpunt:
    grens ná 03b (GTK3-supporting-stack, `lfs-gtk3-complete-*`) — 03a en
    03b zijn losse, apart gecachete `docker run`-stappen binnen dezelfde
    workflow-job (`SKIP_GTK3_STACK=true` resp. `SKIP_XORG=true`), zelfde
-   gelaagde patroon als bootstrap→ch8-complete. Vervolg-sub-fasen
-   (XFCE-core, apps-laag) krijgen op dezelfde manier hun eigen laag
-   zodra ze bestaan, niet pas achteraf.
+   gelaagde patroon als bootstrap→ch8-complete. Inmiddels ook toegepast
+   op de grens ná 03c (XFCE-core, `lfs-xfce-core-complete-*`) — 03a,
+   03b en 03c zijn nu drie losse, apart gecachete stappen (`SKIP_XORG=
+   true` + `SKIP_GTK3_STACK=true` samen bij een 03c-only-build).
+   Vervolg-sub-fasen (apps-laag) krijgen op dezelfde manier hun eigen
+   laag zodra ze bestaan, niet pas achteraf.
 4. **`-j4` als standaard `MAKEFLAGS`/`TESTSUITEFLAGS`** (de CI-runner heeft 4
    cores). Was tijdelijk op `-j2` gezet na een onverklaarde GCC-crash die
    destijds op een OOM-kill leek — de échte oorzaak bleek achteraf een
@@ -334,6 +337,44 @@ als de eerdere drie, op de grens ná 03b — zodat een latere fout in
 XFCE-core (fase 3c) niet ook deze hele, zware stack (met name LLVM)
 opnieuw laat bouwen.
 
+### Fase 3c — XFCE-core: aanvullende externe dependencies (2026-09-23)
+Bij het daadwerkelijk scripten van de 17 XFCE-core-pakketten (volgorde
+al vastgelegd hierboven) bleek een klein aantal externe dependencies
+nog niet aanwezig te zijn (GTK-3.24.50, Cairo, pcre2, shared-mime-info,
+GLib+GI, dbus, gsettings-desktop-schemas en at-spi2-core waren al
+gebouwd sinds 03b). Elk letterlijk tegen de officiële BLFS-pagina
+nagelopen, tarball-directorynaam vooraf geverifieerd (zelfde discipline
+als 03a/03b):
+- **hwdata-0.398** — geen dependencies, nodig voor libdisplay-info
+  (bleek zelf ook nog niet in beeld: libdisplay-info is Required voor
+  libdisplay-info → **hwdata-0.398** als eigen Required-dependency, niet
+  eerder opgemerkt in de eerste audit-doorgang).
+- **libdisplay-info-0.3.0** — Required: hwdata. Nodig voor
+  libxfce4windowing.
+- **hicolor-icon-theme-0.18** — geen dependencies, runtime voor thunar.
+- **startup-notification-0.12** — Required: Xorg Libraries + xcb-util
+  (al aanwezig uit 03a).
+- **libgudev-238** — Required: GLib (aanwezig). Nodig voor
+  thunar-volman.
+- **Desktop-File-Utils-0.28** — Required: GLib (aanwezig).
+- **LXDE Icon Theme-0.5.1** — bewust gekozen i.p.v. gnome-icon-theme
+  (BLFS-pagina hiervoor niet meer gevonden/mogelijk vervallen in 12.4;
+  LXDE-variant is functioneel gelijkwaardig voor xfce4-settings'
+  runtime-vereiste en past bij de minimale-footprint-lijn van dit
+  project).
+- **libnotify-0.8.6** — Required: GTK3 (aanwezig). Runtime heeft dit
+  zelf een notificatiedaemon nodig (bv. xfce4-notifyd, onderdeel van
+  "Xfce Applications" — een latere, apart te scripten apps-sub-fase,
+  géén build-blokkade voor libnotify zelf).
+
+Bewust niet gebouwd (alleen "Recommended", legacy of niet meer
+vindbaar): libxklavier (grotendeels vervangen door libxkbcommon, geen
+actuele BLFS 12.4-pagina gevonden), gnome-icon-theme (LXDE-alternatief
+gekozen).
+
+Vijfde CI-cache-laag (`lfs-xfce-core-complete-*`) toegevoegd, zelfde
+patroon als de eerdere vier, op de grens ná 03c.
+
 ## Fase 4 — devstack: voorbereidend onderzoek (2026-09-22)
 Uitgevoerd tijdens CI-wachttijd (fase 3b), op coordinator-verzoek —
 puur onderzoek, nog geen scripts. Officiële bronnen/versies vandaag
@@ -405,9 +446,10 @@ zijn — dit is nadrukkelijk een momentopname, geen bevroren besluit).
   Mitigatie (checkpoints/cache al VANAF de eerste stap, niet pas
   achteraf) staat en werkt aantoonbaar goed (zie "Vast bouwpatroon per
   fase"), wordt per fase opnieuw getoetst.
-- Exacte pakketlijst/versies voor XFCE-core zijn al uitgewerkt (zie
-  "Dependency-audit fase 3b/3c" hierboven), maar nog niet omgezet naar
-  daadwerkelijke bouwscripts.
+- Fase 3c (XFCE-core, 17 pakketten + 8 externe dependencies) is
+  gescript (zie "Fase 3c — XFCE-core: aanvullende externe
+  dependencies" hierboven) en vijfde cache-laag toegevoegd, maar nog
+  niet in CI gevalideerd — moet nog een eerste keer draaien.
 - Window-tiling-implementatie (devilspie2/wmctrl) voor de live app-tegels
   nog niet in detail uitgewerkt.
 
