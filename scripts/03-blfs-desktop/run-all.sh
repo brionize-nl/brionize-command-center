@@ -10,6 +10,7 @@
 #   SKIP_XORG=true — sla 03a (Xorg-basisbibliotheken + server) over.
 #   SKIP_GTK3_STACK=true — sla 03b (GTK3-supporting-stack) over.
 #   SKIP_XFCE_CORE=true — sla 03c (XFCE-core) over.
+#   SKIP_XFCE_EXTRAS=true — sla 03d (Conky/tiling/werkbladen) over.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,6 +19,7 @@ LOG_DIR="$LFS/sources"
 SKIP_XORG="${SKIP_XORG:-false}"
 SKIP_GTK3_STACK="${SKIP_GTK3_STACK:-false}"
 SKIP_XFCE_CORE="${SKIP_XFCE_CORE:-false}"
+SKIP_XFCE_EXTRAS="${SKIP_XFCE_EXTRAS:-false}"
 # Zelfde -j4 als fase 2 nu (zie 02-base-system/run-all.sh) — de eerdere
 # -j2-voorzichtigheid bleek gebaseerd op een verkeerde oorzaakaanname.
 CHROOT_MAKE_JOBS="4"
@@ -103,4 +105,30 @@ else
   fi
 fi
 
-echo "==> Fase 3 (03a + 03b + 03c) volledig doorlopen"
+if [ "$SKIP_XFCE_EXTRAS" = "true" ]; then
+  echo "==> SKIP_XFCE_EXTRAS=true: 03d (Conky/tiling/werkbladen) overgeslagen (cache-checkpoint hergebruikt)"
+else
+  echo "==> Fase 3 / 03d: Conky/tiling/werkbladen — bronnen ophalen (buiten chroot, als root)"
+  bash "$SCRIPT_DIR/03d-00-fetch-sources.sh"
+
+  echo "==> Scripts voor 03d zichtbaar maken binnen de chroot"
+  mkdir -pv "$LFS/opt/lfs-scripts-03d"
+  mount --bind "$SCRIPT_DIR/inside-chroot-03d" "$LFS/opt/lfs-scripts-03d"
+
+  echo "==> 03d binnen chroot uitvoeren"
+  if chroot "$LFS" /usr/bin/env -i \
+      HOME=/root \
+      TERM="$TERM" \
+      PS1='(lfs chroot) \u:\w\$ ' \
+      PATH=/usr/bin:/usr/sbin \
+      MAKEFLAGS="-j$CHROOT_MAKE_JOBS" \
+      TESTSUITEFLAGS="-j$CHROOT_MAKE_JOBS" \
+      /bin/bash /opt/lfs-scripts-03d/run-all.sh 2>&1 | tee "$LOG_DIR/log-03d-inside-chroot.txt"; then
+    echo "==> 03d (binnen chroot) geslaagd"
+  else
+    echo "==> 03d (binnen chroot) MISLUKT — zie $LOG_DIR/log-03d-inside-chroot.txt"
+    exit 1
+  fi
+fi
+
+echo "==> Fase 3 (03a + 03b + 03c + 03d) volledig doorlopen"

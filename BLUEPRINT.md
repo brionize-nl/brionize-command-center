@@ -375,6 +375,74 @@ gekozen).
 Vijfde CI-cache-laag (`lfs-xfce-core-complete-*`) toegevoegd, zelfde
 patroon als de eerdere vier, op de grens ná 03c.
 
+### Fase 3d — Conky-HUD, window-tiling, 3 werkbladen/hotkeys (2026-09-23)
+Op expliciet verzoek van Brionize: fase 3 helemaal afronden vóór fase 4
+begint. Vier pakketten hier zijn NIET in BLFS 12.4 (niche
+desktop-hulpprogramma's) — "Official Route First" betekent hier: elk
+pakket se eigen officiële upstream-bron, tegen dezelfde precisie-
+discipline (bron letterlijk gelezen, geen aannames, tarball-
+directorynaam vooraf geverifieerd).
+
+- **Lua-5.4.8** — WEL een BLFS-pagina (`general/lua.html`), met een
+  vereiste patch voor een echte shared library + pkgconfig-bestand.
+  Nodig voor zowel devilspie2 (Lua-scriptregels) als Conky (Lua-config
+  — Conky's eigen `CMakeLists.txt` bevat een onvoorwaardelijke
+  `find_package(Lua "5.3" REQUIRED)`, ontdekt door de daadwerkelijke
+  broncode/CMake-bestanden te downloaden en te lezen, niet uit het
+  geheugen).
+- **wmctrl-1.07** — de oorspronkelijke site (tripie.sweb.cz) is dood;
+  via de Wayback Machine (zelfde bewezen fallback-patroon als eerder
+  bij ncurses). Standaard, klein autotools-pakket, geen nieuwe
+  dependencies.
+- **devilspie2-0.36** — officiële GitHub-tag van de hoofdontwikkelaar
+  (gusnan/devilspie2). Eigen Makefile (geen configure/meson) las
+  letterlijk uitgelezen voor de exacte pkg-config-namen: `gtk+-3.0`,
+  `libwnck-3.0` (geleverd door onze libwnck-43.2), `lua`.
+- **Conky-1.24.2** — officiële GitHub-tag. Zeer uitgebreid CMake-
+  optiesysteem (`cmake/ConkyBuildOptions.cmake` letterlijk nagekeken);
+  bewust minimaal gehouden passend bij het BLUEPRINT-doel
+  ("CPU/RAM/opslag, Tailscale-status, logs"): X11+Xft aan (voor een
+  leesbare HUD), Imlib2/Journal/Pulseaudio/MySQL/WLAN/Nvidia uit (geen
+  extra pakketten nodig, niet relevant voor een tekst/grafieken-HUD).
+  Een eigen standaard `conky.conf` (CPU/RAM/opslag/Tailscale-status/
+  logs, zie `inside-chroot-03d/conky-command-center.conf`) vervangt
+  Conky's eigen voorbeeldconfig vóór het bouwen — via
+  `BUILD_BUILTIN_CONFIG` (boek-default aan) wordt dit ten tijde van
+  bouwen in de executable ingebakken (`text2c`), dus de standaard-HUD
+  voor elke gebruiker zonder losse configuratiestap. De Tailscale-
+  statusregel faalt bewust stil (`2>/dev/null`) zolang Tailscale zelf
+  nog niet gebouwd is (dat hoort bij fase 4) — begint vanzelf te werken
+  zodra dat er is.
+- **3 werkbladen + Super+1/2/3** — GEEN los pakket, systeembrede
+  xfconf-standaardconfiguratie onder `/etc/xdg/xfce4/xfconf/xfce-
+  perchannel-xml/` (het officiële XFCE-mechanisme voor systeembrede
+  defaults die elke — ook toekomstige — gebruiker zonder eigen
+  overrides erft). Schema NIET gegokt maar overgenomen uit de
+  daadwerkelijke pakketbroncode: xfwm4's `src/settings.c` bevestigt
+  channel "xfwm4" + `/general/`-padvoorvoegsel voor
+  workspace_count/workspace_names; xfce4-panel's eigen
+  `migrate/default.xml` bevestigt de xfconf-array-XML-syntax.
+  `xfce4-keyboard-shortcuts.xml` wordt AL door libxfce4ui zelf
+  geïnstalleerd (sinds 03c, bevestigd via libxfce4ui's eigen
+  `Makefile.am`: `settingsdir = $(sysconfdir)/xdg/xfce4/xfconf/
+  xfce-perchannel-xml`) — dat bestand wordt hier gericht bewerkt (3
+  standaard workspace-sneltoetsen, boek-default `<Primary>F1/F2/F3`,
+  vervangen door Super+1/2/3), niet vervangen; alle overige
+  sneltoetsen blijven ongemoeid.
+
+**Bewust nog niet gedaan (buiten scope van dit verzoek):** concrete
+devilspie2-Lua-tegelregels (welke apps waar getegeld worden is nog een
+open productkeuze, niet zomaar in te vullen), XFCE dark theme (in
+BLUEPRINT's oorspronkelijke fase-3-scope genoemd maar niet expliciet
+in dit verzoek gevraagd — blijft open, zie "Nog open/bekende risico's").
+
+Zesde CI-cache-laag (`lfs-xfce-extras-complete-*`) toegevoegd, zelfde
+patroon als de eerdere vijf, op de grens ná 03d. Bij het toevoegen ook
+de drie bestaande fase-3a/3b/3c-workflow-stappen proactief voorzien van
+`SKIP_XFCE_EXTRAS=true` (zelfde les als de eerdere scoping-bug rond
+03c: elke stap moet alle LATERE sub-fasen expliciet overslaan, anders
+loopt hij er ongemerkt in door).
+
 ## Fase 4 — devstack: voorbereidend onderzoek (2026-09-22)
 Uitgevoerd tijdens CI-wachttijd (fase 3b), op coordinator-verzoek —
 puur onderzoek, nog geen scripts. Officiële bronnen/versies vandaag
@@ -436,15 +504,19 @@ zijn — dit is nadrukkelijk een momentopname, geen bevroren besluit).
 - Geen API-keys of tokens in de workflow-yml.
 
 ## Nog open / bekende risico's
-- **HEEL FASE 3 (fase 2 + Xorg-basis + GTK3-supporting-stack +
-  XFCE-core) is nu volledig bewezen binnen GitHub Actions**, met vijf
-  op elkaar gestapelde cache-lagen (bootstrap/ch8-complete/
-  xorg-complete/gtk3-complete/xfce-core-complete), allemaal samen
-  bewezen in run 35811106710 (12m14s met alle lagen hit). ~98 losse
-  fase-3-pakketten in totaal. Fase 4 (devstack) is nog niet bewezen.
-  Mitigatie (checkpoints/cache al VANAF de eerste stap, niet pas
-  achteraf) staat en werkt aantoonbaar goed (zie "Vast bouwpatroon per
-  fase"), wordt per fase opnieuw getoetst.
+- **Fase 2 + fase 3a/3b/3c (Xorg-basis + GTK3-supporting-stack +
+  XFCE-core) zijn volledig bewezen binnen GitHub Actions**, met vijf op
+  elkaar gestapelde cache-lagen, allemaal samen bewezen in run
+  35811106710 (12m14s met alle lagen hit). ~98 losse pakketten. Fase 3d
+  (Conky/tiling/werkbladen, zesde cache-laag) is gescript maar nog niet
+  in CI gevalideerd — moet nog een eerste keer draaien. Fase 4
+  (devstack) is nog niet bewezen. Mitigatie (checkpoints/cache al VANAF
+  de eerste stap, niet pas achteraf) staat en werkt aantoonbaar goed
+  (zie "Vast bouwpatroon per fase"), wordt per fase opnieuw getoetst.
+- XFCE dark theme (genoemd in BLUEPRINT's oorspronkelijke fase-3-scope)
+  nog niet uitgewerkt — niet expliciet gevraagd bij de fase-3d-opdracht.
+- Concrete devilspie2-Lua-tegelregels (welke apps waar/hoe getegeld
+  worden) nog een open productkeuze — devilspie2 zelf is wel gebouwd.
 - Window-tiling-implementatie (devilspie2/wmctrl) voor de live app-tegels
   nog niet in detail uitgewerkt.
 

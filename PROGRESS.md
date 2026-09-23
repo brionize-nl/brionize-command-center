@@ -892,8 +892,28 @@
   dependencies) — allemaal aantoonbaar werkend binnen GitHub Actions.
   Totaal ~98 losse fase-3-pakketten, elke fout onderweg gevonden via de
   echte CI-log of de daadwerkelijke pakketbron, nooit gegokt.
-- **Volgende stap:** Conky-HUD, window-tiling (devilspie2/wmctrl) en de
-  3 werkbladen/hotkeys (Super+1/2/3) uitwerken — nog in detail te
-  ontwerpen, zie BLUEPRINT.md "Nog open/bekende risico's". Of, als
-  Brionize dat liever eerst wil: fase 4 (devstack) oppakken —
-  voorbereidend onderzoek staat al in BLUEPRINT.md.
+- **Fase 3d volledig gescript: Conky-HUD, window-tiling, 3 werkbladen/
+  hotkeys.** Brionize koos: eerst fase 3 helemaal afronden vóór fase 4.
+  Audit-eerst uitgevoerd: geen van de vier pakketten (Lua, wmctrl,
+  devilspie2, Conky) staat in BLFS 12.4 (niche desktop-hulpprogramma's)
+  behalve Lua — elk pakket se eigen officiële upstream-bron gebruikt
+  (GitHub-tags, of Wayback Machine voor wmctrl waarvan de
+  oorspronkelijke site dood is). Conky's CMake-configuratie
+  (`ConkyBuildOptions.cmake`) letterlijk nagelopen en bewust minimaal
+  gehouden (X11+Xft aan, Imlib2/Journal/Pulseaudio/MySQL/WLAN/Nvidia
+  uit). Een eigen standaard `conky.conf` (CPU/RAM/opslag/Tailscale-
+  status/logs) wordt via Conky's eigen BUILD_BUILTIN_CONFIG-mechanisme
+  in de executable ingebakken. Voor de 3-werkbladen/Super+1/2/3-
+  configuratie is GEEN xfconf-schema gegokt: het is letterlijk
+  overgenomen uit xfwm4's eigen `src/settings.c` (channel/pad) en
+  xfce4-panel's eigen `migrate/default.xml` (array-XML-syntax); het
+  bestaande, door libxfce4ui zelf geïnstalleerde
+  `xfce4-keyboard-shortcuts.xml` (sinds 03c) wordt gericht bewerkt
+  (alleen de 3 workspace-sneltoetsen), niet vervangen.
+  Zesde CI-cache-laag toegevoegd; de drie bestaande 03a/03b/03c-
+  workflow-stappen proactief voorzien van `SKIP_XFCE_EXTRAS=true`
+  (dezelfde les als de eerdere 03c-scoping-bug).
+- **Volgende stap:** dit committen/pushen en de eerste 03d-run
+  afwachten. Verwacht cache-hits op alle vijf bovenliggende lagen
+  (niets daarin gewijzigd), dus een relatief snelle build van alleen
+  de nieuwe 03d-pakketten. Root-cause-discipline blijft hetzelfde.
