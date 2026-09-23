@@ -436,20 +436,15 @@ zijn — dit is nadrukkelijk een momentopname, geen bevroren besluit).
 - Geen API-keys of tokens in de workflow-yml.
 
 ## Nog open / bekende risico's
-- **Fase 2 (LFS hoofdstuk 6, 7 én 8), fase 3a (Xorg-basisbibliotheken +
-  server, 54 pakketten) én fase 3b (GTK3-supporting-stack incl. het
-  bewust minimale LLVM/Mesa-llvmpipe-duo, 27 pakketten) zijn nu allemaal
-  volledig bewezen binnen GitHub Actions**, elk met een eigen cache-laag
-  (bootstrap/ch8-complete/xorg-complete/gtk3-complete — vier lagen,
-  allemaal samen bewezen in run 35795928749, 1u20m28s totaal). Voor
-  fase 3c (XFCE-core) en fase 4 (devstack) is dit nog niet bewezen.
+- **HEEL FASE 3 (fase 2 + Xorg-basis + GTK3-supporting-stack +
+  XFCE-core) is nu volledig bewezen binnen GitHub Actions**, met vijf
+  op elkaar gestapelde cache-lagen (bootstrap/ch8-complete/
+  xorg-complete/gtk3-complete/xfce-core-complete), allemaal samen
+  bewezen in run 35811106710 (12m14s met alle lagen hit). ~98 losse
+  fase-3-pakketten in totaal. Fase 4 (devstack) is nog niet bewezen.
   Mitigatie (checkpoints/cache al VANAF de eerste stap, niet pas
   achteraf) staat en werkt aantoonbaar goed (zie "Vast bouwpatroon per
   fase"), wordt per fase opnieuw getoetst.
-- Fase 3c (XFCE-core, 17 pakketten + 8 externe dependencies) is
-  gescript (zie "Fase 3c — XFCE-core: aanvullende externe
-  dependencies" hierboven) en vijfde cache-laag toegevoegd, maar nog
-  niet in CI gevalideerd — moet nog een eerste keer draaien.
 - Window-tiling-implementatie (devilspie2/wmctrl) voor de live app-tegels
   nog niet in detail uitgewerkt.
 

@@ -878,8 +878,22 @@
     (zelfde bewuste aanpak als mkfontscale: niet de hele x7app-batch,
     alleen dit ene commando; heeft zelf alleen libICE/libSM nodig, al
     aanwezig uit 03a).
-- **Volgende stap:** dit committen/pushen en herhalen. Als dit slaagt
-  is fase 3c (XFCE-core, 17 pakketten + 9 externe dependencies)
-  VOLLEDIG groen — daarmee is heel fase 3 (Xorg-basis + GTK3-stack +
-  XFCE-core) bewezen. Daarna: Conky-HUD, window-tiling en de 3
-  werkbladen/hotkeys uitwerken, of fase 4 (devstack) oppakken.
+- **MIJLPAAL: fase 3c (XFCE-core, 17 pakketten + 9 externe
+  dependencies) volledig groen — iceauth-fix bevestigd, en daarmee is
+  HEEL FASE 3 nu bewezen.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35811106710
+  (12m14s totaal, alle vier bovenliggende cache-lagen hit,
+  xfce-core-complete-cache voor het eerst succesvol gebouwd+
+  opgeslagen). Alle vijf cache-lagen nu bewezen samen te werken.
+  Base-system-artifact succesvol geüpload. Dit sluit fase 3 volledig
+  af: Xorg-basisbibliotheken + server (54 pakketten), de GTK3-
+  supporting-stack incl. het bewust minimale LLVM/Mesa-llvmpipe-duo
+  (27 pakketten), en XFCE-core (17 pakketten + 9 externe
+  dependencies) — allemaal aantoonbaar werkend binnen GitHub Actions.
+  Totaal ~98 losse fase-3-pakketten, elke fout onderweg gevonden via de
+  echte CI-log of de daadwerkelijke pakketbron, nooit gegokt.
+- **Volgende stap:** Conky-HUD, window-tiling (devilspie2/wmctrl) en de
+  3 werkbladen/hotkeys (Super+1/2/3) uitwerken — nog in detail te
+  ontwerpen, zie BLUEPRINT.md "Nog open/bekende risico's". Of, als
+  Brionize dat liever eerst wil: fase 4 (devstack) oppakken —
+  voorbereidend onderzoek staat al in BLUEPRINT.md.
