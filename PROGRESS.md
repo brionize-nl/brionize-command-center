@@ -840,7 +840,27 @@
     ECHT alleen zijn eigen sub-fase bouwt (dezelfde bug zou de
     "Fase 3b"-stap ook geraakt hebben zodra alleen 03b's cache miste
     terwijl 03a al een hit was).
-- **Volgende stap:** dit committen/pushen en herhalen. Verwacht opnieuw
-  een volledige 03a+03b-rebuild (~1u20m, want run-all.sh wijzigde weer),
-  maar dit keer correct gescopet — dus 03c zou nu pas ná een compleet
-  gebouwde 03b moeten starten. Root-cause-discipline blijft hetzelfde.
+- **Scoping-fix bevestigd: 03a en 03b bouwden allebei foutloos opnieuw
+  (volledige rebuild, ~1u26m) en sloegen hun cache correct op.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35803856441:
+  `libgudev` (dat vorige keer ten onrechte "glib-2.0 not found" gaf)
+  slaagde nu meteen — bevestigt dat dat puur de workflow-scoping-bug
+  was, geen echte fout. 03c kwam tot en met `06-libwnck.sh` (6 van de
+  17 XFCE-core-pakketten + alle 8 externe dependencies) foutloos door,
+  toen:
+  ```
+  checking for xsltproc... no
+  configure: error: package 'xsltproc' missing
+  ```
+  - **Root cause:** xfce4-dev-tools' eigen configure heeft `xsltproc`
+    (uit libxslt) HARD nodig — anders dan de eerdere rst2man/xsltproc-
+    problemen bij GLib/gdk-pixbuf/GTK3 (die via een optionele
+    `-D man*=false`-vlag te omzeilen waren), is dit hier geen
+    optionele doc-feature maar een niet-uit-te-schakelen
+    configure-vereiste.
+  - **Fix:** libxslt-1.1.43 toegevoegd als `00i-libxslt.sh` (Required:
+    libxml2, al aanwezig uit 03b), vóór xfce4-dev-tools.
+- **Volgende stap:** dit committen/pushen en herhalen. Verwacht nu
+  cache-hits op bootstrap/ch8-complete/xorg-complete/gtk3-complete
+  (niets daarin gewijzigd deze keer), dus een relatief snelle build van
+  alleen de resterende 03c-pakketten.
