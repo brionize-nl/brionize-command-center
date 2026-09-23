@@ -1012,6 +1012,18 @@
   nooit automatisch gestart). Eerlijk vastgelegde grens: de
   tegelregels matchen op raamtitels van apps die pas in fase 4 bestaan
   — alleen Lua-syntax te verifiëren (`luac -p`), niet runtime-gedrag.
-- **Volgende stap:** dit committen/pushen en de eerste run afwachten.
-  Verwacht cache-hits op de vijf bovenliggende lagen. Na groen: fase 4
-  (devstack) — onderzoek staat al klaar in BLUEPRINT.md.
+- **MIJLPAAL: fase 3d-afronding in één keer groen — thema, tegelregels
+  en autostart allemaal correct op de eerste poging.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35872055515
+  (8m45s totaal, alle vijf bovenliggende lagen hit,
+  xfce-extras-complete-cache opnieuw succesvol opgeslagen). Echte
+  evidence uit de log bevestigd: `06-theme-command-center-matrix.sh`
+  maakte het thema aan en de xsettings.xml-sanity-check slaagde;
+  `07-devilspie2-tiling-rules.sh` liet `luac -p` daadwerkelijk zonder
+  fouten doorlopen (bewijst geldige Lua-syntax); `08-autostart.sh`
+  installeerde beide .desktop-bestanden. Fase 3 (nu inclusief thema +
+  werkende tegelregels + autostart) is hiermee compleet afgerond zoals
+  Brionize gevraagd had.
+- **Volgende stap:** terugkoppelen bij Brionize/coordinator. Daarna:
+  fase 4 (devstack) — onderzoek staat al klaar in BLUEPRINT.md, hoeft
+  niet opnieuw.
