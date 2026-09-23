@@ -12,6 +12,9 @@ STEPS=(
   "03-devilspie2.sh"
   "04-conky.sh"
   "05-workspaces-hotkeys.sh"
+  "06-theme-command-center-matrix.sh"
+  "07-devilspie2-tiling-rules.sh"
+  "08-autostart.sh"
 )
 
 for step in "${STEPS[@]}"; do

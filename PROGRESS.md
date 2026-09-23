@@ -994,6 +994,24 @@
   XFCE-core (17 + 9 pakketten), en Conky/tiling/werkbladen (4
   pakketten + configuratie) — ~102 losse fase-3-pakketten totaal, alle
   bewezen binnen GitHub Actions.
-- **Volgende stap:** terugkoppelen bij Brionize/coordinator. Open
-  vervolgpunten (niet in dit verzoek): XFCE dark theme, concrete
-  devilspie2-tegelregels (productkeuze), fase 4 (devstack).
+- **Fase 3d afronding gescript: Command-Center-Matrix-thema +
+  devilspie2-tegelregels + autostart.** Brionize vulde de twee laatste
+  open productkeuzes in (Matrix/cyberpunk-thema; exacte
+  tegelindeling). Audit-eerst: twee bestaande cyberpunk-GTK-thema's
+  onderzocht (Roboron3042/Cyberpunk-Neon — bleek outrun/magenta-cyaan,
+  geen groen; WoodyCat-ctOS-Theme — heeft wél een "Toxic Matrix Green"
+  editie maar is een zware suite met apt/pacman/dnf-aanroepen en een
+  eigen concurrerende Conky-setup, past niet bij dit from-scratch-
+  project). Zelf een minimaal GTK3-CSS-thema samengesteld, bovenop
+  GTK3's ingebakken Adwaita-dark — resourcepad en kleurnamen letterlijk
+  geverifieerd tegen GTK3's eigen broncode. devilspie2-tegelregels
+  geschreven op basis van devilspie2's eigen Lua-API (letterlijk uit
+  `src/script.c`/`src/script_functions.c` gehaald, incl. bevestiging
+  dat workspace-nummering 1-based is). Conky en devilspie2 kregen
+  bovendien voor het eerst een autostart-entry (stonden er wel, werden
+  nooit automatisch gestart). Eerlijk vastgelegde grens: de
+  tegelregels matchen op raamtitels van apps die pas in fase 4 bestaan
+  — alleen Lua-syntax te verifiëren (`luac -p`), niet runtime-gedrag.
+- **Volgende stap:** dit committen/pushen en de eerste run afwachten.
+  Verwacht cache-hits op de vijf bovenliggende lagen. Na groen: fase 4
+  (devstack) — onderzoek staat al klaar in BLUEPRINT.md.

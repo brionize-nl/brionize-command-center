@@ -1,0 +1,48 @@
+/* Command-Center-Matrix — Matrix/cyberpunk GTK3-thema.
+ * Diepzwart met neon-groen (primair) en neon-cyaan (secundair) accenten.
+ *
+ * Gebouwd BOVENOP GTK3's eigen ingebakken Adwaita-dark (geen aparte
+ * GTK-theme-package nodig) — het resource-pad hieronder is letterlijk
+ * geverifieerd tegen GTK3's eigen broncode (niet gegokt):
+ * gtk/gen-gtk-gresources-xml.py bevestigt prefix '/org/gtk/libgtk' +
+ * bestand 'theme/Adwaita/gtk-contained-dark.css'. De @define-color-
+ * namen hieronder komen letterlijk uit GTK3's eigen
+ * gtk/theme/Adwaita/_colors-public.scss (de officiële, door
+ * applicaties gebruikte named colors) — later in het bestand
+ * gedefinieerde kleuren overschrijven de Adwaita-dark-standaarden via
+ * normale CSS-cascadering.
+ */
+@import url("resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained-dark.css");
+
+@define-color theme_bg_color #050805;
+@define-color theme_base_color #000000;
+@define-color theme_fg_color #00ff41;
+@define-color theme_text_color #00ff41;
+@define-color theme_selected_bg_color #00ff41;
+@define-color theme_selected_fg_color #000000;
+@define-color insensitive_bg_color #0a0f0a;
+@define-color insensitive_fg_color #146b2e;
+@define-color insensitive_base_color #000000;
+@define-color theme_unfocused_fg_color #0abdc6;
+@define-color theme_unfocused_text_color #0abdc6;
+@define-color theme_unfocused_bg_color #050805;
+@define-color theme_unfocused_base_color #000000;
+@define-color theme_unfocused_selected_bg_color #0abdc6;
+@define-color theme_unfocused_selected_fg_color #000000;
+@define-color unfocused_insensitive_color #146b2e;
+@define-color borders #0abdc6;
+@define-color unfocused_borders #146b7a;
+@define-color warning_color #ffb000;
+@define-color error_color #ff2951;
+@define-color success_color #00ff41;
+@define-color wm_title #00ff41;
+@define-color wm_unfocused_title #0abdc6;
+@define-color wm_bg_a #0a0f0a;
+@define-color wm_bg_b #050805;
+@define-color content_view_bg #000000;
+@define-color text_view_bg #000000;
+
+window, .background {
+  background-color: @theme_bg_color;
+  color: @theme_fg_color;
+}

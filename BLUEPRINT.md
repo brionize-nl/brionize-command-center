@@ -443,6 +443,80 @@ de drie bestaande fase-3a/3b/3c-workflow-stappen proactief voorzien van
 03c: elke stap moet alle LATERE sub-fasen expliciet overslaan, anders
 loopt hij er ongemerkt in door).
 
+### Fase 3d afronding — Matrix-thema + tegelregels (2026-09-23)
+Brionize vulde de twee laatste open productkeuzes in: dark theme
+("Matrix/cyberpunk-stijl — diepzwart met neon-groen/cyaan accenten")
+en de exacte devilspie2-tegelindeling per werkblad.
+
+**Thema — `Command-Center-Matrix` (zelf samengesteld, geen bestaand
+pakket):** eerst twee bestaande GTK/XFCE-cyberpunk-thema's onderzocht:
+`Roboron3042/Cyberpunk-Neon` (839 sterren) bleek bij het nalezen van de
+daadwerkelijke oomox-kleurdefinities een outrun-palet (marineblauw
+`#000b1e` + cyaan `#0abdc6` + MAGENTA `#ea00d9`) — geen groen, dus geen
+match met "Matrix". `debarch777/WoodyCat-ctOS-Theme` heeft wél een
+letterlijke "Toxic Matrix (Green) — `#00ff88`"-editie, maar is een
+zware, opinionated "suite" die `apt`/`pacman`/`dnf` aanroept (wij
+hebben geen package manager), zijn EIGEN Conky-config/autostart
+installeert (conflicteert met onze al bestaande, bewust scoped
+Conky-HUD) en qterminal/whiskermenu/fastfetch/imagemagick vereist —
+niets hiervan past bij dit from-scratch-project. Gekozen: zelf een
+minimaal GTK3-CSS-thema samenstellen (de coordinator se eigen
+aangeboden alternatief), consistent met de hele LFS/BLFS-filosofie
+("alles zelf bouwen, geen ondoorzichtige externe assets").
+- Gebouwd BOVENOP GTK3's ingebakken Adwaita-dark (geen aparte
+  GTK-theme-package nodig) — het resourcepad
+  (`resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained-dark.css`)
+  en de volledige lijst @define-color-namen zijn letterlijk
+  geverifieerd tegen GTK3's eigen broncode (`gtk/gen-gtk-gresources-
+  xml.py` en `gtk/theme/Adwaita/_colors-public.scss`), niet gegokt.
+- Kleurenpalet: bg `#050805` (bijna-zwart), base `#000000`,
+  fg/tekst/accent `#00ff41` (Matrix-neon-groen), secundair/borders
+  `#0abdc6` (neon-cyaan), standaard warning/error-kleuren behouden
+  voor leesbaarheid.
+- Actief gezet via de bestaande `xsettings.xml` (al geïnstalleerd door
+  xfce4-settings in 03c, channel "xsettings", `/Net/ThemeName` —
+  bevestigd via xfsettingsd's eigen `xsettings.c`, dat elke
+  `/Net/`-of-`/Gtk/`-property generiek doorgeeft aan het
+  XSETTINGS-protocol) — zelfde gericht-bewerken-i.p.v.-vervangen-
+  patroon als bij de keyboard-shortcuts.
+- **Bewuste scope-grens:** xfwm4's eigen randdecoratie/titelbalk-thema
+  (een apart, bitmap-gebaseerd systeem, los van GTK-CSS) blijft op het
+  standaard "Default"-thema — eigen randgrafiek tekenen valt buiten
+  wat redelijk is zonder beeldbewerkingsgereedschap. Vastgelegd als
+  bekende grens, niet stilzwijgend weggelaten.
+
+**devilspie2-tegelregels (`command-center-tiling.lua`):** devilspie2's
+Lua-API (functienamen, argumenten, 1-based workspace-nummering) NIET
+gegokt maar letterlijk uitgelezen uit `src/script.c` (de
+`lua_register`-aanroepen) en `src/script_functions.c` (de C-
+implementaties, incl. `wnck_screen_get_workspace(screen, number-1)` —
+bevestigt dat `set_window_workspace(1)` echt werkblad 1 is). Matcht op
+raamtitel via `string.find(name, "...", 1, true)` (plain-string-modus,
+geen Lua-patroon-escaping nodig) met de productnamen (n8n, Claude,
+ChatGPT, Mistral, Gemini, Supabase) plus twee vaste titels voor de
+nog-niet-bestaande terminals (`Command-Center-Logs`,
+`Command-Center-GitHub` — fase 4 moet deze expliciet met `--title`
+starten).
+- Geïnstalleerd onder `/etc/skel/.config/devilspie2/` — NIET
+  `/etc/xdg/...`: devilspie2's eigen README bevestigt dat het pakket
+  alleen `g_get_user_config_dir()` leest, geen systeembrede
+  xfconf-achtige fallback kent. `/etc/skel` is hier het juiste
+  systeembrede-standaard-mechanisme (kopieert mee naar elke nieuwe
+  gebruiker via `useradd -m`).
+- **Evidence-grens, expliciet benoemd:** gevalideerd met `luac -p`
+  tijdens het bouwen (bewijst geldige Lua-SYNTAX) — dit bewijst NIET
+  dat de titelpatronen runtime kloppen tegen de daadwerkelijke apps,
+  wat onmogelijk te testen is zonder een live X-sessie met die apps
+  open (bestaan pas na fase 4). Expliciet vastgelegd als bekende
+  beperking, niet als "klaar en getest" voorgesteld.
+
+**Autostart:** Conky en devilspie2 hadden voorheen GEEN autostart-
+mechanisme (alleen gebouwd, nooit gestart) — nu toegevoegd als
+`/etc/xdg/autostart/*.desktop`-bestanden, letterlijk in hetzelfde
+formaat en op hetzelfde pad als xfce4-settings' eigen
+`xfsettingsd.desktop.in` (freedesktop-autostart, door xfce4-session
+voor elke gebruiker doorlopen).
+
 ## Fase 4 — devstack: voorbereidend onderzoek (2026-09-22)
 Uitgevoerd tijdens CI-wachttijd (fase 3b), op coordinator-verzoek —
 puur onderzoek, nog geen scripts. Officiële bronnen/versies vandaag
@@ -512,11 +586,19 @@ zijn — dit is nadrukkelijk een momentopname, geen bevroren besluit).
   Mitigatie (checkpoints/cache al VANAF de eerste stap, niet pas
   achteraf) staat en werkt aantoonbaar goed (zie "Vast bouwpatroon per
   fase"), wordt per fase opnieuw getoetst.
-- XFCE dark theme (genoemd in BLUEPRINT's oorspronkelijke fase-3-scope)
-  nog niet uitgewerkt — niet expliciet gevraagd bij de fase-3d-opdracht.
-- Concrete devilspie2-Lua-tegelregels (welke apps waar/hoe getegeld
-  worden) nog een open productkeuze — devilspie2 zelf is wel gebouwd en
-  werkend.
+- **Dark theme (Command-Center-Matrix) en devilspie2-tegelregels zijn
+  nu uitgewerkt** (zie "Fase 3d afronding" hierboven), maar nog niet in
+  CI gevalideerd — moeten nog een eerste keer draaien.
+- devilspie2-tegelregels matchen op raamtitels van apps die pas in
+  fase 4 gebouwd worden (n8n, AI-webapps, Supabase Studio) — kunnen
+  daarom alleen op Lua-SYNTAX gevalideerd worden, niet op runtime-
+  gedrag. Moet geverifieerd/bijgesteld worden zodra fase 4 de
+  daadwerkelijke apps opzet. De twee terminals (Command-Center-Logs/
+  -GitHub) moeten in fase 4 expliciet met een matchende `--title`
+  gestart worden.
+- xfwm4's eigen randdecoratie-/titelbalk-thema (bitmap-gebaseerd, los
+  van GTK-CSS) is bewust NIET herontworpen — blijft op het standaard
+  "Default"-thema.
 
 ## Beslislog
 - **2026-09-18 — GO gegeven.**
@@ -556,3 +638,14 @@ zijn — dit is nadrukkelijk een momentopname, geen bevroren besluit).
     libdrm-2.4.125, en de Python-modules Mako en PyYAML (installatiepad
     nog niet exact uitgezocht — vermoedelijk `pip3 install`, nog te
     bevestigen bij het schrijven van de daadwerkelijke Mesa-bouwscripts).
+- **2026-09-23 — Dark theme en devilspie2-tegelindeling ingevuld.**
+  Matrix/cyberpunk-stijl (diepzwart + neon-groen/cyaan) gekozen;
+  zelf samengesteld als `Command-Center-Matrix` GTK3-CSS-thema
+  (bovenop Adwaita-dark) na te hebben vastgesteld dat geen van de
+  onderzochte bestaande cyberpunk-thema's goed paste (zie "Fase 3d
+  afronding" hierboven voor de volledige afweging). Tegelindeling:
+  werkblad 1 = n8n-canvas + Conky-HUD + terminal-logs, werkblad 2 = 4
+  AI-webapps in een 2x2-grid, werkblad 3 = Supabase Studio +
+  GitHub-terminal — vastgelegd in devilspie2-Lua-regels die raamtitels
+  matchen (nog te verifiëren zodra fase 4 de apps daadwerkelijk
+  opzet).

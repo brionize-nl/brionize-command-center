@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=Command-Center-Matrix
+Comment=Matrix/cyberpunk: diepzwart met neon-groen/cyaan accenten
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+GtkTheme=Command-Center-Matrix
+MetacityTheme=Command-Center-Matrix
+IconTheme=Adwaita
+CursorTheme=Adwaita
+ButtonLayout=menu:minimize,maximize,close
