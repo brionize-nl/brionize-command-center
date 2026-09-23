@@ -978,5 +978,22 @@
     configure te laten crashen, aangezien de resulterende
     GIT_SHORT_SHA in de RELEASE-tak niet gebruikt wordt. Nog te
     bevestigen in de volgende run.)
-- **Volgende stap:** dit committen/pushen en herhalen. Verwacht opnieuw
-  cache-hits op de vijf bovenliggende lagen.
+- **MIJLPAAL: fase 3d (Conky-HUD, window-tiling, 3 werkbladen/hotkeys)
+  volledig groen — RELEASE=ON-fix bevestigd, en daarmee is HEEL FASE 3
+  nu compleet afgerond, zoals Brionize gevraagd had.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35853792648
+  (7m00s totaal, alle vijf bovenliggende lagen hit,
+  xfce-extras-complete-cache voor het eerst succesvol gebouwd+
+  opgeslagen). Alle zes cache-lagen nu bewezen samen te werken.
+  Base-system-artifact succesvol geüpload. Vier losse fixes onderweg
+  in 03d (wmctrl-tar-extensie, devilspie2-LUA_QL, Conky-RELEASE=ON),
+  stuk voor stuk via de echte log of daadwerkelijke pakketbron
+  gevonden.
+- **Fase 3 is hiermee volledig afgerond:** Xorg-basis (54 pakketten),
+  GTK3-supporting-stack incl. LLVM/Mesa-llvmpipe (27 pakketten),
+  XFCE-core (17 + 9 pakketten), en Conky/tiling/werkbladen (4
+  pakketten + configuratie) — ~102 losse fase-3-pakketten totaal, alle
+  bewezen binnen GitHub Actions.
+- **Volgende stap:** terugkoppelen bij Brionize/coordinator. Open
+  vervolgpunten (niet in dit verzoek): XFCE dark theme, concrete
+  devilspie2-tegelregels (productkeuze), fase 4 (devstack).

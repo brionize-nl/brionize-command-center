@@ -504,21 +504,19 @@ zijn — dit is nadrukkelijk een momentopname, geen bevroren besluit).
 - Geen API-keys of tokens in de workflow-yml.
 
 ## Nog open / bekende risico's
-- **Fase 2 + fase 3a/3b/3c (Xorg-basis + GTK3-supporting-stack +
-  XFCE-core) zijn volledig bewezen binnen GitHub Actions**, met vijf op
-  elkaar gestapelde cache-lagen, allemaal samen bewezen in run
-  35811106710 (12m14s met alle lagen hit). ~98 losse pakketten. Fase 3d
-  (Conky/tiling/werkbladen, zesde cache-laag) is gescript maar nog niet
-  in CI gevalideerd — moet nog een eerste keer draaien. Fase 4
-  (devstack) is nog niet bewezen. Mitigatie (checkpoints/cache al VANAF
-  de eerste stap, niet pas achteraf) staat en werkt aantoonbaar goed
-  (zie "Vast bouwpatroon per fase"), wordt per fase opnieuw getoetst.
+- **HEEL FASE 3 (fase 2 + Xorg-basis + GTK3-supporting-stack +
+  XFCE-core + Conky/tiling/werkbladen) is nu volledig bewezen binnen
+  GitHub Actions**, met zes op elkaar gestapelde cache-lagen, allemaal
+  samen bewezen in run 35853792648 (7m00s met alle lagen hit). ~102
+  losse pakketten in totaal. Fase 4 (devstack) is nog niet bewezen.
+  Mitigatie (checkpoints/cache al VANAF de eerste stap, niet pas
+  achteraf) staat en werkt aantoonbaar goed (zie "Vast bouwpatroon per
+  fase"), wordt per fase opnieuw getoetst.
 - XFCE dark theme (genoemd in BLUEPRINT's oorspronkelijke fase-3-scope)
   nog niet uitgewerkt — niet expliciet gevraagd bij de fase-3d-opdracht.
 - Concrete devilspie2-Lua-tegelregels (welke apps waar/hoe getegeld
-  worden) nog een open productkeuze — devilspie2 zelf is wel gebouwd.
-- Window-tiling-implementatie (devilspie2/wmctrl) voor de live app-tegels
-  nog niet in detail uitgewerkt.
+  worden) nog een open productkeuze — devilspie2 zelf is wel gebouwd en
+  werkend.
 
 ## Beslislog
 - **2026-09-18 — GO gegeven.**
