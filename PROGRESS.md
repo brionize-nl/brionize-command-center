@@ -816,8 +816,31 @@
   (`lfs-xfce-core-complete-*`) toegevoegd, zelfde patroon als de
   eerdere vier: 03a/03b/03c zijn nu drie losse, apart gecachete
   docker-run-stappen binnen dezelfde workflow-job.
-- **Volgende stap:** dit committen/pushen en de eerste 03c-run
-  afwachten. Verwacht cache-hits op bootstrap/ch8-complete/xorg-
-  complete/gtk3-complete (niets daarin gewijzigd), dus een relatief
-  snelle build van alleen de 25 nieuwe 03c-pakketten. Root-cause-
-  discipline blijft hetzelfde.
+- **Eerste 03c-run: een workflow-bekabelingsfout, geen script-fout.**
+  Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/35803040971:
+  omdat `03-blfs-desktop/run-all.sh` zelf wijzigde (SKIP_XFCE_CORE-
+  logica erbij), werden zowel xorg-complete- als gtk3-complete-cache
+  ongeldig — een verwachte, terechte cache-miss (zelfde patroon als
+  eerder bij de -j4-wijziging). 03a bouwde foutloos, maar de stap
+  "Fase 3a (Xorg-basis) bouwen" faalde toch — bleek bij het lezen van
+  de log dat deze stap's `docker run` alleen `SKIP_GTK3_STACK=true`
+  meegaf, niet `SKIP_XFCE_CORE=true`. Zonder die laatste vlag liep
+  `run-all.sh` na 03a gewoon door naar 03c (03b was wel terecht
+  overgeslagen), en 03c faalde meteen op:
+  ```
+  Run-time dependency glib-2.0 found: NO (tried pkgconfig)
+  ../meson.build:46:11: ERROR: Dependency "glib-2.0" not found, tried pkgconfig
+  ```
+  — logisch, want 03b (dat GLib bouwt) was net overgeslagen in DEZE
+  container-aanroep. Geen echte libgudev/GLib-fout, puur een
+  scoping-fout in de workflow-yml zelf.
+  - **Fix:** `-e SKIP_XFCE_CORE=true` toegevoegd aan zowel de "Fase 3a"-
+    als de "Fase 3b"-stap se `docker run`-aanroepen, zodat elke stap
+    ECHT alleen zijn eigen sub-fase bouwt (dezelfde bug zou de
+    "Fase 3b"-stap ook geraakt hebben zodra alleen 03b's cache miste
+    terwijl 03a al een hit was).
+- **Volgende stap:** dit committen/pushen en herhalen. Verwacht opnieuw
+  een volledige 03a+03b-rebuild (~1u20m, want run-all.sh wijzigde weer),
+  maar dit keer correct gescopet — dus 03c zou nu pas ná een compleet
+  gebouwde 03b moeten starten. Root-cause-discipline blijft hetzelfde.

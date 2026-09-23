@@ -177,6 +177,7 @@ jobs:
               -v "$RUNNER_TEMP/lfs:/mnt/lfs" \
               -v "$GITHUB_WORKSPACE/scripts:/opt/lfs/scripts:ro" \
               -e SKIP_GTK3_STACK=true \
+              -e SKIP_XFCE_CORE=true \
               brionize-lfs-toolchain:latest \
               bash -c "bash /opt/lfs/scripts/03-blfs-desktop/run-all.sh"
           fi
@@ -221,6 +222,7 @@ jobs:
               -v "$RUNNER_TEMP/lfs:/mnt/lfs" \
               -v "$GITHUB_WORKSPACE/scripts:/opt/lfs/scripts:ro" \
               -e SKIP_XORG=true \
+              -e SKIP_XFCE_CORE=true \
               brionize-lfs-toolchain:latest \
               bash -c "bash /opt/lfs/scripts/03-blfs-desktop/run-all.sh"
           fi
