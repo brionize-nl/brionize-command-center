@@ -27,6 +27,16 @@ echo "==> Scripts voor fase 4 zichtbaar maken binnen de chroot"
 mkdir -pv "$LFS/opt/lfs-scripts-04"
 mount --bind "$SCRIPT_DIR/inside-chroot" "$LFS/opt/lfs-scripts-04"
 
+# chroot verandert het filesysteem-root — /etc/resolv.conf van de
+# HOST-container (met werkende DNS) is dus niet automatisch zichtbaar
+# binnen $LFS. Geen eerdere fase had dit nodig (fetch_verified() draait
+# altijd BUITEN de chroot); fase 4 is de eerste met live
+# netwerktoegang van BINNEN de chroot (npm install -g n8n/pm2, tegen
+# de npm-registry). Zonder dit faalt npm hard met EAI_AGAIN
+# (DNS-resolutie mislukt) — bevestigd in een echte CI-run, niet
+# vooraf aangenomen.
+cp -v /etc/resolv.conf "$LFS/etc/resolv.conf"
+
 echo "==> Fase 4 binnen chroot uitvoeren"
 if chroot "$LFS" /usr/bin/env -i \
     HOME=/root \

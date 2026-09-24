@@ -1075,6 +1075,23 @@
     libxml2/harfbuzz waar ICU ook alleen optioneel was).
   - **Fix:** `--without-icu` toegevoegd — exact wat de foutmelding zelf
     al voorstelde.
+- **PostgreSQL-fix bevestigd: PostgreSQL, SQLite, en de Python-
+  sqlite3-herbouw (met echte runtime-verificatie) alledrie groen.**
+  Run https://github.com/brionize-nl/brionize-command-center/actions/runs/36045103116:
+  `10-n8n.sh` faalde op:
+  ```
+  npm error code EAI_AGAIN
+  npm error request to https://registry.npmjs.org/n8n failed, reason: getaddrinfo EAI_AGAIN registry.npmjs.org
+  ```
+  - **Root cause:** `chroot` verandert het filesysteem-root — de
+    HOST-container heeft een werkend `/etc/resolv.conf`, maar dat is
+    niet automatisch zichtbaar binnen `$LFS` na chroot. Geen eerdere
+    fase liep hier tegenaan omdat `fetch_verified()` altijd BUITEN de
+    chroot draait; fase 4 is de eerste met live netwerktoegang van
+    BINNEN de chroot (`npm install -g` tegen de npm-registry).
+  - **Fix:** `cp /etc/resolv.conf "$LFS/etc/resolv.conf"` toegevoegd
+    aan fase 4's eigen `run-all.sh`, vóór de chroot-aanroep — standaard
+    LFS-boek-patroon voor exact dit scenario.
 - **Volgende stap:** dit committen/pushen en herhalen. Verwacht opnieuw
   cache-hits op alle zes bovenliggende lagen.
 - **Eerlijke tussenstand devilspie2-runtime-verificatie (coordinator
