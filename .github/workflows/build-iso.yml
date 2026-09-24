@@ -1,4 +1,4 @@
-name: Build LFS/BLFS system (fase 1+2+3)
+name: Build LFS/BLFS system (fase 1+2+3+4)
 
 # Reden om dit in de cloud te draaien i.p.v. lokaal: de LFS/BLFS-compile is
 # te zwaar om op Brionize's eigen (24/7 productie-)machine te draaien. Zie
@@ -334,6 +334,46 @@ jobs:
         with:
           path: ${{ runner.temp }}/lfs-xfce-extras-complete-cache.tar.zst
           key: lfs-xfce-extras-complete-${{ hashFiles('docker/Dockerfile.build', 'scripts/01-toolchain/**', 'scripts/02-base-system/run-all.sh', 'scripts/02-base-system/ch6-*.sh', 'scripts/02-base-system/ch7-*.sh', 'scripts/02-base-system/ch8-00-fetch-sources.sh', 'scripts/02-base-system/inside-chroot/**', 'scripts/02-base-system/inside-chroot-ch8/**', 'scripts/03-blfs-desktop/run-all.sh', 'scripts/03-blfs-desktop/03a-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03a/**', 'scripts/03-blfs-desktop/03b-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03b/**', 'scripts/03-blfs-desktop/03c-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03c/**', 'scripts/03-blfs-desktop/03d-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03d/**', 'scripts/lib/**') }}
+
+      - name: Devstack-complete-cache herstellen (indien beschikbaar)
+        # Zevende cache-laag: alles hierboven + fase 4 (devstack).
+        # Zelfde tar-bestand-aanpak als de eerdere zes lagen. Fase 4
+        # heeft geen sub-fasen (SKIP-vlaggen) nodig — het is één
+        # cohesieve, op zichzelf staande docker-run.
+        id: lfs-devstack-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/lfs-devstack-complete-cache.tar.zst
+          key: lfs-devstack-complete-${{ hashFiles('docker/Dockerfile.build', 'scripts/01-toolchain/**', 'scripts/02-base-system/run-all.sh', 'scripts/02-base-system/ch6-*.sh', 'scripts/02-base-system/ch7-*.sh', 'scripts/02-base-system/ch8-00-fetch-sources.sh', 'scripts/02-base-system/inside-chroot/**', 'scripts/02-base-system/inside-chroot-ch8/**', 'scripts/03-blfs-desktop/run-all.sh', 'scripts/03-blfs-desktop/03a-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03a/**', 'scripts/03-blfs-desktop/03b-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03b/**', 'scripts/03-blfs-desktop/03c-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03c/**', 'scripts/03-blfs-desktop/03d-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03d/**', 'scripts/04-devstack-apps/run-all.sh', 'scripts/04-devstack-apps/00-fetch-sources.sh', 'scripts/04-devstack-apps/inside-chroot/**', 'scripts/lib/**') }}
+
+      - name: Fase 4 (devstack) bouwen (of cache hergebruiken)
+        run: |
+          if [ "${{ steps.lfs-devstack-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "==> Cache-hit: hash van fase 1 t/m 4 ongewijzigd — uitpakken i.p.v. herbouwen (fase 4 overgeslagen)."
+            sudo rm -rf "$RUNNER_TEMP/lfs"
+            mkdir -p "$RUNNER_TEMP/lfs"
+            sudo tar --zstd -xpf "$RUNNER_TEMP/lfs-devstack-complete-cache.tar.zst" -C "$RUNNER_TEMP/lfs"
+          else
+            echo "==> Cache-miss: fase 4 (devstack) nog bouwen."
+            docker run --rm --privileged \
+              -v "$RUNNER_TEMP/lfs:/mnt/lfs" \
+              -v "$GITHUB_WORKSPACE/scripts:/opt/lfs/scripts:ro" \
+              brionize-lfs-toolchain:latest \
+              bash -c "bash /opt/lfs/scripts/04-devstack-apps/run-all.sh"
+          fi
+
+      - name: Devstack-complete-cache-archief bouwen (alleen bij cache-miss)
+        if: steps.lfs-devstack-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo tar --zstd -cpf "$RUNNER_TEMP/lfs-devstack-complete-cache.tar.zst" -C "$RUNNER_TEMP/lfs" .
+          sudo chown "$(id -u):$(id -g)" "$RUNNER_TEMP/lfs-devstack-complete-cache.tar.zst"
+
+      - name: Devstack-complete-cache opslaan (alleen bij cache-miss)
+        if: steps.lfs-devstack-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/lfs-devstack-complete-cache.tar.zst
+          key: lfs-devstack-complete-${{ hashFiles('docker/Dockerfile.build', 'scripts/01-toolchain/**', 'scripts/02-base-system/run-all.sh', 'scripts/02-base-system/ch6-*.sh', 'scripts/02-base-system/ch7-*.sh', 'scripts/02-base-system/ch8-00-fetch-sources.sh', 'scripts/02-base-system/inside-chroot/**', 'scripts/02-base-system/inside-chroot-ch8/**', 'scripts/03-blfs-desktop/run-all.sh', 'scripts/03-blfs-desktop/03a-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03a/**', 'scripts/03-blfs-desktop/03b-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03b/**', 'scripts/03-blfs-desktop/03c-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03c/**', 'scripts/03-blfs-desktop/03d-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03d/**', 'scripts/04-devstack-apps/run-all.sh', 'scripts/04-devstack-apps/00-fetch-sources.sh', 'scripts/04-devstack-apps/inside-chroot/**', 'scripts/lib/**') }}
 
       - name: Logs uploaden (ook bij falen)
         if: always()

@@ -1024,6 +1024,35 @@
   installeerde beide .desktop-bestanden. Fase 3 (nu inclusief thema +
   werkende tegelregels + autostart) is hiermee compleet afgerond zoals
   Brionize gevraagd had.
-- **Volgende stap:** terugkoppelen bij Brionize/coordinator. Daarna:
-  fase 4 (devstack) — onderzoek staat al klaar in BLUEPRINT.md, hoeft
-  niet opnieuw.
+- **GO voor fase 4: 11 stappen gescript, audit-eerst.** Twee echte
+  productafwegingen gevonden en opgelost vóórdat er geschreven werd:
+  (1) "systemd watchdogs" kan niet — geen systemd op dit systeem — PM2
+  (al in de lijst) vervult die rol al; (2) PWA-snelkoppelingen vereisen
+  een browser-engine (WebKitGTK, ~1,5-2u extra bouwtijd + een hele
+  nieuwe afhankelijkheidsketen) — aan Brionize voorgelegd, gekozen:
+  uitstellen naar een eigen vervolgstap. Elke prebuilt binary (Node/
+  Bun/gh/cloudflared/Supabase-CLI/Tailscale) vooraf met `readelf`
+  gecontroleerd op dynamische-linkvereisten (allemaal ruim binnen onze
+  glibc, meeste Go-binaries zelfs statisch gelinkt — geen giswerk).
+  SQLite's eigen BLFS-pagina wees op een niet-vanzelfsprekende
+  vervolgstap (Python herbouwen voor het sqlite3-modules) — direct
+  opgevolgd met een echte runtime-verificatie. Vóór het pushen nog een
+  potentieel CI-brekende fout zelf gevonden: de chroot-PATH mist
+  `/usr/local/bin` (waar alle fase-4-tools naartoe symlinken) — fase
+  4's eigen run-all.sh zet dit nu recht. Zevende cache-laag
+  toegevoegd.
+- **Volgende stap:** dit committen/pushen en de eerste run afwachten.
+  Verwacht cache-hits op alle zes bovenliggende lagen, dus alleen de
+  nieuwe fase-4-stappen bouwen.
+- **Eerlijke tussenstand devilspie2-runtime-verificatie (coordinator
+  vroeg dit expliciet te controleren, niet aan te nemen):** dit kan nog
+  NIET, ook na deze fase-4-stap. n8n is nu wel geïnstalleerd, maar
+  alleen als CLI/server-proces met een web-UI — die web-UI opent nog
+  geen VENSTER zonder browser (uitgesteld). Supabase Studio idem
+  (cloud-dashboard, ook browser nodig). Bovendien is er nog GEEN
+  terminal-emulator gebouwd (nodig voor de "terminal-logs"/"GitHub-
+  terminal"-tegels) — die stond niet expliciet in fase 4's lijst. Een
+  echte runtime-test van de tegelregels is dus nog niet mogelijk; dit
+  eerlijk vastgelegd i.p.v. te doen alsof de syntax-check (fase 3d)
+  voldoende was. Wordt vervolgd zodra de browserstap + een
+  terminal-emulator er zijn.

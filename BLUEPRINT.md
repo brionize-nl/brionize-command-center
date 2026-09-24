@@ -517,7 +517,7 @@ formaat en op hetzelfde pad als xfce4-settings' eigen
 `xfsettingsd.desktop.in` (freedesktop-autostart, door xfce4-session
 voor elke gebruiker doorlopen).
 
-## Fase 4 — devstack: voorbereidend onderzoek (2026-09-22)
+## Fase 4 — devstack (2026-09-24, GO gegeven, hieronder geïmplementeerd)
 Uitgevoerd tijdens CI-wachttijd (fase 3b), op coordinator-verzoek —
 puur onderzoek, nog geen scripts. Officiële bronnen/versies vandaag
 geverifieerd (GitHub Releases-API's, npm-registry, officiële
@@ -563,11 +563,65 @@ zelf compileren, waar dat de normale distributievorm is.
 - **PM2** — huidige versie: **7.0.4**, via npm-registry. Net als n8n:
   `npm install -g pm2`, heeft Node.js nodig.
 
-**Nog niet gedaan (bewust, hoort bij het echte fase-4-bouwmoment):**
-MD5/checksum-verificatie per bestand (voor `fetch_verified()`), exacte
-installatiescripts, PWA-snelkoppelingen-onderzoek, en een her-check van
-alle versienummers hierboven (kunnen tegen die tijd alweer verouderd
-zijn — dit is nadrukkelijk een momentopname, geen bevroren besluit).
+### Fase 4 — implementatie (2026-09-24)
+Alle versienummers hierboven op 2026-09-24 opnieuw geverifieerd —
+ongewijzigd t.o.v. 2026-09-22. MD5's berekend na daadwerkelijk
+downloaden van elk bestand (niet aangenomen), en voor elke prebuilt
+binary de dynamische-linkvereisten met `readelf -d`/`readelf -V`
+gecontroleerd vóór gebruik (bewijst dat ze op onze from-source-glibc
+zullen werken, zonder ze te kunnen draaien) — alle Go-binaries
+(gh/cloudflared/tailscale/tailscaled) zijn statisch gelinkt (geen
+afhankelijkheden); Node/Bun/Supabase CLI hebben alleen de standaard
+glibc/gcc-runtime-libraries nodig (max GLIBC_2.28), ruim binnen wat
+onze LFS-toolchain levert.
+
+**Structurele correcties t.o.v. het oorspronkelijke fase-4-briefje:**
+- **"systemd watchdogs" kan niet** — dit systeem heeft bewust geen
+  systemd (alleen udev uit hoofdstuk 8). PM2 (al in de devstack-lijst)
+  vervult dezelfde "zelfherstellend"-rol (procesbeheer met automatisch
+  herstarten) zonder systemd nodig te hebben — geen aparte oplossing
+  nodig, PM2 IS de oplossing.
+- **PWA-snelkoppelingen (Claude/ChatGPT/Mistral/Gemini,
+  Super+C/G/M/A) zijn UITGESTELD naar een eigen vervolgstap** — vereisen
+  een browser-engine. Chromium/Firefox staan niet eens in BLFS (te
+  complex/volatiel). De enige haalbare optie is WebKitGTK: 21 SBU
+  bouwtijd (~1,5-2+ uur, vergelijkbaar met het eerdere LLVM/Mesa-duo),
+  1,5 GB schijfruimte, en een hele nieuwe afhankelijkheidsketen (ICU,
+  Ruby, GStreamer base+bad) die nog niet gebouwd is — bovendien bestaat
+  er geen kant-en-klare browser-toepassing in BLFS, dus zou een eigen
+  minimale WebKitGTK-kiosk-shell (C) geschreven moeten worden. Aan
+  Brionize voorgelegd als een echt beslispunt (significante bouwtijd/
+  complexiteit, niet vanzelfsprekend uit de oorspronkelijke
+  "PWA-snelkoppelingen"-omschrijving); Brionize koos: uitstellen naar
+  een eigen vervolgstap, eerst de rest van fase 4 afronden.
+- **SQLite's eigen BLFS-pagina bevat een niet-vanzelfsprekende
+  vervolgstap:** "Several packages use an sqlite Python plugin. After
+  installing this package, Python-3.13.7 should be rebuilt to create
+  this plugin." — Python (hoofdstuk 8) werd gebouwd vóórdat SQLite
+  bestond. Direct opgevolgd: Python herbouwd (zelfde configure-vlaggen
+  als de oorspronkelijke hoofdstuk-8-build) direct na SQLite, met een
+  echte runtime-verificatie (`python3 -c "import sqlite3"`) i.p.v.
+  aan te nemen dat het werkte.
+- **PostgreSQL/PM2/n8n bewuste scope-grens:** alleen de programma's +
+  (voor PostgreSQL) de systeemgebruiker/groep worden hier geïnstalleerd.
+  `initdb` (PostgreSQL) en het daadwerkelijk instellen van PM2-
+  procesdefinities voor n8n/cloudflared-tunnel/etc. zijn first-boot-/
+  per-machine-taken (elke installatie heeft zijn eigen, verse database
+  en procesconfiguratie nodig) — zelfde architectuur-scheiding als
+  BLUEPRINT.md al vastlegt voor hoofdstuk-9-systeemconfiguratie.
+- **Een echte, potentieel CI-brekende fout vóór het pushen gevonden en
+  gefixt:** de chroot-omgeving van elke fase zet `PATH=/usr/bin:
+  /usr/sbin` — GEEN `/usr/local/bin`, waar alle fase-4-tools naar
+  symlinken. Zonder fix zou geen enkele `node`/`npm`/`gh`/etc.-aanroep
+  binnen de eigen scripts hebben gewerkt. Fase 4's eigen
+  `run-all.sh` zet nu `PATH=/usr/local/bin:/usr/bin:/usr/sbin` voor
+  zijn chroot-aanroep (fase 1-3 ongewijzigd, zij hebben dit niet
+  nodig).
+
+Zevende CI-cache-laag (`lfs-devstack-complete-*`) toegevoegd, zelfde
+patroon als de eerdere zes, op de grens ná fase 4. Fase 4 heeft geen
+sub-fasen/SKIP-vlaggen nodig — één cohesieve, op zichzelf staande
+`docker run`.
 
 ## Security / Secrets (grondregel, niet-onderhandelbaar)
 - **Nooit hardcoded secrets, accounts of persoonlijke data in de repo** —
