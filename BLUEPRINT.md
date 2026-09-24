@@ -632,24 +632,24 @@ sub-fasen/SKIP-vlaggen nodig — één cohesieve, op zichzelf staande
 - Geen API-keys of tokens in de workflow-yml.
 
 ## Nog open / bekende risico's
-- **HEEL FASE 3 (fase 2 + Xorg-basis + GTK3-supporting-stack +
-  XFCE-core + Conky/tiling/werkbladen) is nu volledig bewezen binnen
-  GitHub Actions**, met zes op elkaar gestapelde cache-lagen, allemaal
-  samen bewezen in run 35853792648 (7m00s met alle lagen hit). ~102
-  losse pakketten in totaal. Fase 4 (devstack) is nog niet bewezen.
-  Mitigatie (checkpoints/cache al VANAF de eerste stap, niet pas
-  achteraf) staat en werkt aantoonbaar goed (zie "Vast bouwpatroon per
-  fase"), wordt per fase opnieuw getoetst.
-- **Dark theme (Command-Center-Matrix) en devilspie2-tegelregels zijn
-  nu uitgewerkt** (zie "Fase 3d afronding" hierboven), maar nog niet in
-  CI gevalideerd — moeten nog een eerste keer draaien.
-- devilspie2-tegelregels matchen op raamtitels van apps die pas in
-  fase 4 gebouwd worden (n8n, AI-webapps, Supabase Studio) — kunnen
-  daarom alleen op Lua-SYNTAX gevalideerd worden, niet op runtime-
-  gedrag. Moet geverifieerd/bijgesteld worden zodra fase 4 de
-  daadwerkelijke apps opzet. De twee terminals (Command-Center-Logs/
-  -GitHub) moeten in fase 4 expliciet met een matchende `--title`
-  gestart worden.
+- **FASE 1 T/M 4 zijn nu allemaal volledig bewezen binnen GitHub
+  Actions**, met zeven op elkaar gestapelde cache-lagen, allemaal samen
+  bewezen in run 36047165966 (~21m13s met alle lagen hit). ~113 losse
+  pakketten/tools in totaal. Mitigatie (checkpoints/cache al VANAF de
+  eerste stap, niet pas achteraf) staat en werkt aantoonbaar goed (zie
+  "Vast bouwpatroon per fase"), wordt per fase opnieuw getoetst.
+- **PWA-snelkoppelingen (Claude/ChatGPT/Mistral/Gemini,
+  Super+C/G/M/A) zijn bewust uitgesteld** naar een eigen vervolgstap —
+  vereisen een browser-engine (WebKitGTK) die nog niet gebouwd is. Zie
+  "Fase 4 — implementatie" hierboven voor de volledige onderbouwing.
+- devilspie2-tegelregels (fase 3d) matchen op raamtitels van apps die
+  ook na fase 4 nog geen VENSTER openen zonder browser (n8n/Supabase
+  Studio hebben alleen een web-UI; er is ook nog geen terminal-
+  emulator gebouwd voor de "terminal-logs"/"GitHub-terminal"-tegels).
+  Een echte runtime-verificatie van de tegelregels is dus nog steeds
+  niet mogelijk — blijft afhankelijk van de uitgestelde browserstap
+  (en een nog te plannen terminal-emulator, niet expliciet in fase 4's
+  lijst).
 - xfwm4's eigen randdecoratie-/titelbalk-thema (bitmap-gebaseerd, los
   van GTK-CSS) is bewust NIET herontworpen — blijft op het standaard
   "Default"-thema.

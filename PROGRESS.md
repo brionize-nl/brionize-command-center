@@ -1092,8 +1092,26 @@
   - **Fix:** `cp /etc/resolv.conf "$LFS/etc/resolv.conf"` toegevoegd
     aan fase 4's eigen `run-all.sh`, vóór de chroot-aanroep — standaard
     LFS-boek-patroon voor exact dit scenario.
-- **Volgende stap:** dit committen/pushen en herhalen. Verwacht opnieuw
-  cache-hits op alle zes bovenliggende lagen.
+- **MIJLPAAL: fase 4 (devstack) volledig groen — resolv.conf-fix
+  bevestigd.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/36047165966
+  (~21m13s totaal, alle zes bovenliggende lagen hit,
+  devstack-complete-cache voor het eerst succesvol gebouwd+
+  opgeslagen). Alle 11 stappen (Node.js, Bun, gh, cloudflared,
+  Supabase CLI, Tailscale, PostgreSQL, SQLite, Python-sqlite3-herbouw,
+  n8n, PM2) geslaagd. Vijf losse fixes onderweg (cloudflared-
+  bestandsnaam, PostgreSQL --without-icu, chroot-resolv.conf), elk via
+  de echte CI-log gevonden, plus twee structurele bugs vóór het pushen
+  zelf gevonden (chroot-PATH miste /usr/local/bin) en opgelost zonder
+  een CI-poging nodig te hebben.
+- **Devstack is hiermee compleet** behalve de bewust uitgestelde
+  PWA-snelkoppelingen (browser-engine nodig). Devilspie2-tegelregels
+  uit fase 3d blijven vooralsnog niet runtime te verifiëren — n8n/
+  Supabase Studio hebben geen browser om een venster te openen, en er
+  is nog geen terminal-emulator. Eerlijk vastgelegd, niet aangenomen.
+- **Volgende stap:** terugkoppelen bij Brionize/coordinator. Open
+  vervolgstap: PWA-snelkoppelingen + browser-engine (WebKitGTK), zodra
+  gewenst.
 - **Eerlijke tussenstand devilspie2-runtime-verificatie (coordinator
   vroeg dit expliciet te controleren, niet aan te nemen):** dit kan nog
   NIET, ook na deze fase-4-stap. n8n is nu wel geïnstalleerd, maar
