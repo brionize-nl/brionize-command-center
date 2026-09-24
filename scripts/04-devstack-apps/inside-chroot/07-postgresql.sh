@@ -3,6 +3,12 @@
 # harde Required-dependencies (alle BLFS-vermelde deps zijn Optional —
 # OpenSSL/Perl/Python al aanwezig sinds hoofdstuk 8, --with-tcl bewust
 # niet gebruikt, geen Tcl gebouwd).
+# '--without-icu' — PostgreSQL 17's configure detecteert/vereist ICU
+# standaard AAN (echte fout: "checking whether to build with ICU
+# support... yes" -> "ICU library not found"), ook al noemt het
+# boek-voorbeeld deze vlag niet expliciet. ICU bewust niet gebouwd
+# (groot pakket, alleen "Optional" voor PostgreSQL) — zelfde fix als de
+# foutmelding zelf voorstelt.
 #
 # BEWUSTE GRENS: alleen de server-/client-programma's + de postgres-
 # systeemgebruiker/groep worden hier aangemaakt. `initdb` (het
@@ -19,7 +25,8 @@ cd postgresql-17.6
 sed -i '/DEFAULT_PGSOCKET_DIR/s@/tmp@/run/postgresql@' src/include/pg_config_manual.h
 
 ./configure --prefix=/usr \
-    --docdir=/usr/share/doc/postgresql-17.6
+    --docdir=/usr/share/doc/postgresql-17.6 \
+    --without-icu
 make
 make install
 

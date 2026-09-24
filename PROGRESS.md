@@ -1059,6 +1059,22 @@
     geen andere mismatches gevonden.
   - **Fix:** `04-cloudflared.sh` verwijst nu naar
     `cloudflared-linux-amd64`.
+- **cloudflared-fix bevestigd: alle zes prebuilt-binary-stappen
+  (Node.js, Bun, gh, cloudflared, Supabase CLI, Tailscale) nu groen.**
+  Run https://github.com/brionize-nl/brionize-command-center/actions/runs/36044263483:
+  `07-postgresql.sh` faalde als eerste bron-bouwstap op:
+  ```
+  checking whether to build with ICU support... yes
+  checking for icu-uc icu-i18n... no
+  configure: error: ICU library not found
+  ```
+  - **Root cause:** PostgreSQL 17's configure detecteert/vereist ICU
+    standaard AAN — het boek-voorbeeldcommando noemt geen
+    `--without-icu`, maar ICU (alleen "Optional" voor PostgreSQL) is
+    bewust niet gebouwd (groot pakket, zelfde reden als eerder bij
+    libxml2/harfbuzz waar ICU ook alleen optioneel was).
+  - **Fix:** `--without-icu` toegevoegd — exact wat de foutmelding zelf
+    al voorstelde.
 - **Volgende stap:** dit committen/pushen en herhalen. Verwacht opnieuw
   cache-hits op alle zes bovenliggende lagen.
 - **Eerlijke tussenstand devilspie2-runtime-verificatie (coordinator
