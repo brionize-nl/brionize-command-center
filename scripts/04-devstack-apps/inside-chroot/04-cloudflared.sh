@@ -5,6 +5,6 @@
 # afhankelijkheden.
 set -euo pipefail
 cd /sources
-install -v -m755 cloudflared /usr/local/bin/cloudflared
+install -v -m755 cloudflared-linux-amd64 /usr/local/bin/cloudflared
 
 echo "==> cloudflared klaar: $(cloudflared --version)"

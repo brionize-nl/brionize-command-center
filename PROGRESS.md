@@ -1041,9 +1041,26 @@
   `/usr/local/bin` (waar alle fase-4-tools naartoe symlinken) — fase
   4's eigen run-all.sh zet dit nu recht. Zevende cache-laag
   toegevoegd.
-- **Volgende stap:** dit committen/pushen en de eerste run afwachten.
-  Verwacht cache-hits op alle zes bovenliggende lagen, dus alleen de
-  nieuwe fase-4-stappen bouwen.
+- **Eerste fase-4-run: Node.js, Bun en gh alledrie meteen groen
+  (bevestigt de PATH-fix werkte), cloudflared faalde op een simpele
+  bestandsnaam-mismatch.** Run
+  https://github.com/brionize-nl/brionize-command-center/actions/runs/36043320820:
+  alle zes bovenliggende cache-lagen waren hit. `04-cloudflared.sh`
+  faalde met:
+  ```
+  install: cannot stat 'cloudflared': No such file or directory
+  ```
+  - **Root cause:** `00-fetch-sources.sh` gebruikt de bestandsnaam
+    `cloudflared-linux-amd64` (matcht de URL) als `fetch_verified()`-
+    sleutel, maar het script zocht naar het kortere `cloudflared` —
+    een simpele naamgevings-mismatch, geen echte dependency-fout. Alle
+    andere scripts gecontroleerd op dezelfde fout (Anti-Patch-Loop-
+    discipline: niet aannemen dat het incident op zichzelf staat) —
+    geen andere mismatches gevonden.
+  - **Fix:** `04-cloudflared.sh` verwijst nu naar
+    `cloudflared-linux-amd64`.
+- **Volgende stap:** dit committen/pushen en herhalen. Verwacht opnieuw
+  cache-hits op alle zes bovenliggende lagen.
 - **Eerlijke tussenstand devilspie2-runtime-verificatie (coordinator
   vroeg dit expliciet te controleren, niet aan te nemen):** dit kan nog
   NIET, ook na deze fase-4-stap. n8n is nu wel geïnstalleerd, maar
