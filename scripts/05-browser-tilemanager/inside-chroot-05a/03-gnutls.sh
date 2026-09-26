@@ -6,7 +6,16 @@
 # omdat libtasn1 toen nog NA GnuTLS in de volgorde stond; root-cause
 # fix was herordenen, niet een configure-vlag). Nodig voor
 # glib-networking (TLS-backend voor libsoup3, uiteindelijk voor
-# WebKitGTK). Recommended (p11-kit) bewust niet gebouwd.
+# WebKitGTK). Recommended (p11-kit) bewust niet gebouwd — niets in onze
+# keten heeft PKCS#11/hardware-token-ondersteuning nodig.
+#
+# Derde CI-run (2026-09-26) faalde alsnog: "p11-kit >= 0.23.1 was not
+# found. To disable PKCS #11 support use --without-p11-kit" — de
+# oorspronkelijke `--with-default-trust-store-pkcs11="pkcs11:"`-vlag
+# (rechtstreeks overgenomen uit het boek-voorbeeld, dat zelf wél
+# p11-kit bouwt) stond in tegenspraak met onze eigen "p11-kit niet
+# bouwen"-keuze hierboven. Root-cause fix: die vlag vervangen door
+# --without-p11-kit, consistent met de al genomen beslissing.
 #
 # Libunistring ("Recommended", alleen voor IDN/internationalisatie-
 # verrijking van GnuTLS zelf) blijkt configure-technisch WEL hard
@@ -24,7 +33,7 @@ cd gnutls-3.8.10
 
 ./configure --prefix=/usr \
     --docdir=/usr/share/doc/gnutls-3.8.10 \
-    --with-default-trust-store-pkcs11="pkcs11:" \
+    --without-p11-kit \
     --with-included-unistring
 make
 make install

@@ -1220,3 +1220,31 @@ Nettle's eigen "Error 1 (ignored)" bij `libhogweed.so` in dezelfde run
 gecontroleerd en bevestigd benign (nettle's eigen Makefile-patroon,
 `.so` wordt alsnog correct geïnstalleerd — geen actie nodig).
 Derde CI-run getriggerd.
+
+## 2026-09-26 — Fase 5a: derde CI-run gefaald (p11-kit), + volledige configure-audit
+Derde CI-run (36239721669) kwam verder (libtasn1 + libunistring nu
+bewezen opgelost), maar faalde opnieuw in `03-gnutls.sh`'s configure:
+```
+checking for p11-kit-1 >= 0.23.1... no
+configure: error:
+  *** p11-kit >= 0.23.1 was not found. To disable PKCS #11 support
+  *** use --without-p11-kit, ...
+```
+Root-cause: eigen inconsistentie — het script documenteerde al "p11-kit
+bewust niet gebouwd", maar liet de boek-voorbeeldvlag
+`--with-default-trust-store-pkcs11="pkcs11:"` staan, die zelf p11-kit
+vereist. Fix: die vlag vervangen door `--without-p11-kit`, nu consistent
+met de eigen beslissing.
+
+Om niet een vierde keer via losse CI-runs tegen verborgen harde
+configure-checks aan te lopen (Anti-Patch-Loop-discipline: één
+grondige controle boven eindeloos auditen), is gnutls-3.8.10's echte
+`configure`-script lokaal gedownload en volledig doorzocht op elke
+"was not found"/`configure: error`-tak. Resultaat: naast de al
+opgeloste nettle/hogweed/gmp (aanwezig)/libtasn1/libunistring/p11-kit
+zijn ALLE overige controles (libev, LIBIDN2, libunbound/Libdane,
+trousers/TPM, ZLIB, LIBBROTLI, LIBZSTD) bevestigd non-fataal
+("*_optional=yes" als standaardwaarde wanneer de bijbehorende
+--with-vlag niet is meegegeven — alleen een WARNING, geen
+configure:error). Dit was daarmee de laatste verborgen gnutls-
+afhankelijkheid. Vierde CI-run getriggerd.
