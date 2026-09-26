@@ -1197,3 +1197,26 @@ hernoemd via `git mv`, `run-all.sh`'s STEPS-array bijgewerkt, foutieve
 aanname-commentaar in de betrokken scripts gecorrigeerd. Volledige
 `bash -n`-sweep opnieuw gedraaid (OK) vóór de fix-commit. Tweede
 CI-run getriggerd om dit te bewijzen.
+
+## 2026-09-26 — Fase 5a: tweede CI-run gefaald (zelfde patroon, andere lib), gefixt
+Tweede CI-run (36239248902) bevestigde de libtasn1-fix (nu wél
+`checking for libtasn1 >= 4.9... yes`), maar `03-gnutls.sh` faalde
+alsnog, verder in de configure-stap:
+```
+checking for library containing u8_normalize... no
+configure: error:
+  *** Libunistring was not found. To use the included one, use --with-included-unistring
+```
+Zelfde onderliggende patroon als de libtasn1-fout: GnuTLS's boek-eigen
+"Recommended"-lijst (p11-kit, libunistring) is voor libunistring
+configure-technisch hard, met een door GnuTLS zelf aangeboden
+ingebakken-kopie-vlag als escape hatch. Anders dan libtasn1 heeft
+libunistring geen andere afnemer in onze keten (alleen IDN/i18n-
+verrijking van GnuTLS zelf) — dus geen 20e los systeempakket
+toegevoegd, maar `--with-included-unistring` aan GnuTLS's configure
+meegegeven (zelfde minimale-footprint-redenering als eerder bij bv.
+de LXDE-iconenset i.p.v. de volledige gnome-icon-theme-batch).
+Nettle's eigen "Error 1 (ignored)" bij `libhogweed.so` in dezelfde run
+gecontroleerd en bevestigd benign (nettle's eigen Makefile-patroon,
+`.so` wordt alsnog correct geïnstalleerd — geen actie nodig).
+Derde CI-run getriggerd.
