@@ -1133,3 +1133,42 @@ zeven cache-lagen), geen lokale build-containers actief. Volledige
 "we stoppen hier"-samenvatting + eerstvolgende-stap-opties staan in
 HANDOFF.md (bijgewerkt in dezelfde commit als deze regel). Geen fase
 of fix gestart na dit punt — wacht op een nieuwe instructie.
+
+## 2026-09-26 — Autopilot GO tot eindproduct + start fase 5a (WebKitGTK)
+Brionize heeft de UX-herziening "Tegel-manager & Visuele laag"
+(BLUEPRINT.md, commit 3b07791) vastgelegd en een verruimd mandaat
+gegeven: zelfstandig doorbouwen tot eindproduct, zonder tussentijdse
+check-ins voor implementatiedetails. Eerste bouwblok: de
+WebKitGTK-browserstap (hoort samen met de tegel-manager, want die
+rendert zijn animaties/menu's via die browser-engine).
+
+Volledige BLFS-afhankelijkheidsaudit voor WebKitGTK-2.48.5 gedaan
+(elke "Dependencies"-sectie gevolgd tot de keten stopt, niets gegokt):
+19 nieuwe pakketten gevonden (Nettle, GnuTLS, glib-networking, libpsl,
+nghttp2, libsoup3, ICU, Little CMS, libsecret, libtasn1, libwebp,
+OpenJPEG, Ruby, unifdef, Which, gstreamer, gst-plugins-base,
+gst-plugins-bad, WebKitGTK zelf). Alle 19 bouwscripts geschreven onder
+`scripts/05-browser-tilemanager/inside-chroot-05a/`, plus
+`05a-00-fetch-sources.sh` (fetch_verified() voor elke bron, elke
+uitpakmap-naam vooraf gecontroleerd via proefdownload — inclusief
+ICU's kale `icu/`-mapnaam) en de top-level/inside-chroot
+`run-all.sh`-orchestrators, zelfde patroon als fase 3/4.
+
+Twee bewuste implementatiekeuzes binnen het bestaande mandaat (geen
+nieuw beslispunt): `ninja -j2` specifiek voor WebKitGTK zelf (boek
+waarschuwt zelf voor >4GiB RAM per compile-job in de release-build;
+16GB-runner, 2×~4GB=~8GB marge), en `-D ENABLE_BUBBLEWRAP_SANDBOX=OFF`
+(bubblewrap is niet gebouwd, enkel "Recommended" — bekende, begrensde
+beperking, geen sandbox-isolatie voor webcontent-processen).
+
+Achtste CI-cache-laag (`lfs-webkit-complete-*`) toegevoegd aan
+`.github/workflows/build-iso.yml`, exact hetzelfde
+restore/build-of-cache-hit/archive/save-patroon als de zeven eerdere
+lagen, ingevoegd direct na de devstack-cache-laag.
+
+Alle nieuwe scripts met `bash -n` syntax-gecontroleerd (allemaal OK) en
+de workflow-YAML met `python3 -c "import yaml; yaml.safe_load(...)"`
+gevalideerd (OK) vóór commit. Nog GEEN CI-run getriggerd voor dit werk
+— dat is de eerstvolgende stap na deze commit. BLUEPRINT.md bijgewerkt
+met de volledige audit ("Fase 5a — WebKitGTK-afhankelijkheidsketen" +
+bijbehorende Beslislog-regel).

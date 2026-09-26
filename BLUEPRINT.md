@@ -757,6 +757,50 @@ animaties/menu's van de tegel-manager renderen via die browser-engine) —
 dit wordt het eerstvolgende grote bouwblok, vóór ISO-verpakking/
 installer-naar-schijf/first-boot-wizard.
 
+## Fase 5a — WebKitGTK-afhankelijkheidsketen (2026-09-26)
+Eerste stap van het browser/tegel-manager-bouwblok: WebKitGTK-2.48.5 zelf,
+inclusief de volledige transitieve afhankelijkheidsketen. Audit gedaan
+door de "Dependencies"-sectie van elke BLFS-pagina te volgen tot de keten
+stopt (geen losse aannames) — zie ook `scripts/05-browser-tilemanager/`.
+
+**19 nieuwe pakketten, in bouwvolgorde:**
+Nettle-3.10.2 → GnuTLS-3.8.10 → glib-networking-2.80.1 → libpsl-0.21.5 →
+nghttp2-1.66.0 → libsoup-3.6.5 (TLS/crypto- + HTTP-keten voor libsoup3),
+ICU-77.1, Little CMS-2.17, libsecret-0.21.7, libtasn1-4.20.0,
+libwebp-1.6.0, OpenJPEG-2.5.3, Ruby-3.4.5 (leunt op libyaml, al gebouwd in
+fase 3b voor PyYAML — geen nieuw werk), unifdef-2.12, Which-2.23,
+gstreamer-1.26.5 → gst-plugins-base-1.26.5 → gst-plugins-bad-1.26.5
+(multimedia-keten), en tot slot WebKitGTK-2.48.5 zelf.
+Al aanwezig en herbruikt: Cairo, CMake, GTK-3, libgudev, Mesa, SQLite.
+GTK-3-variant gekozen (niet GTK-4) — boek is expliciet dat het één van
+beide moet zijn, matcht onze bestaande XFCE/GTK3-desktop.
+
+**Twee bewuste, gedocumenteerde afwijkingen/keuzes (binnen bestaande
+mandaat-grenzen, geen nieuw beslispunt):**
+- `ninja -j2` specifiek voor de WebKitGTK-compile-stap (i.p.v. het
+  algemene `-j4`-patroon): het boek waarschuwt zelf dat sommige
+  bronbestanden in de release-configuratie >4GiB RAM per compile-job
+  nodig hebben en de OOM-killer anders een job kan doden. GitHub
+  Actions-runners hebben 16GB RAM; 2×~4GB=~8GB laat voldoende marge.
+- `-D ENABLE_BUBBLEWRAP_SANDBOX=OFF` (boek: `ON`) — bubblewrap is enkel
+  "Recommended" en wordt niet gebouwd. Bekend, begrensd gevolg: geen
+  sandbox-isolatie voor webcontent-processen. Te heroverwegen als
+  bubblewrap ooit alsnog wordt toegevoegd.
+
+Elke nieuwe tarball-uitpakmap vooraf gecontroleerd via een proefdownload
+(incl. ICU's ongebruikelijke kale `icu/`-mapnaam, expliciet zo genoemd in
+het boek). Achtste CI-cache-laag (`lfs-webkit-complete-*`) toegevoegd aan
+`.github/workflows/build-iso.yml`, zelfde restore/build/archive/save-
+patroon als de zeven eerdere lagen; `SKIP_WEBKIT=true` binnen
+`scripts/05-browser-tilemanager/run-all.sh` zelf (analoog aan fase 3's
+SKIP-vlaggen) voor toekomstige 05b/05c-iteraties.
+
+Nog niet gestart (volgt na 05a bewezen groen): 05b (minimale
+WebKitGTK-kiosk-shell + generiek "voeg webapp toe"-mechanisme), 05c
+(tegel-manager-kern: rechtsklik-integratie, constellatie-persistentie,
+klik-animatie, hardware-bewuste tegel-limiet met live RAM-monitoring,
+multi-monitor-toggle, icoonthema).
+
 ## Beslislog
 - **2026-09-18 — GO gegeven.**
   - LFS/BLFS gekozen i.p.v. Debian/Ubuntu-based live-build (bewust, ondanks
@@ -821,3 +865,8 @@ installer-naar-schijf/first-boot-wizard.
   keuzes met meerdere geldige richtingen die het eindproduct wezenlijk
   bepalen — die blijven worden teruggelegd, ook al is er nu maximale
   autonomie gegeven voor al het overige.
+- **2026-09-26 — Fase 5a (WebKitGTK-afhankelijkheidsketen) uitgewerkt.**
+  Zie sectie "Fase 5a — WebKitGTK-afhankelijkheidsketen" hierboven voor de
+  volledige audit (19 pakketten, `-j2`-RAM-fix, bubblewrap-afwijking).
+  Binnen bestaand mandaat (Autopilot GO tot eindproduct, zelfde datum) —
+  geen nieuw beslispunt, geen extern beslissingskader geraakt.

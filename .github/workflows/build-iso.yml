@@ -375,6 +375,49 @@ jobs:
           path: ${{ runner.temp }}/lfs-devstack-complete-cache.tar.zst
           key: lfs-devstack-complete-${{ hashFiles('docker/Dockerfile.build', 'scripts/01-toolchain/**', 'scripts/02-base-system/run-all.sh', 'scripts/02-base-system/ch6-*.sh', 'scripts/02-base-system/ch7-*.sh', 'scripts/02-base-system/ch8-00-fetch-sources.sh', 'scripts/02-base-system/inside-chroot/**', 'scripts/02-base-system/inside-chroot-ch8/**', 'scripts/03-blfs-desktop/run-all.sh', 'scripts/03-blfs-desktop/03a-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03a/**', 'scripts/03-blfs-desktop/03b-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03b/**', 'scripts/03-blfs-desktop/03c-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03c/**', 'scripts/03-blfs-desktop/03d-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03d/**', 'scripts/04-devstack-apps/run-all.sh', 'scripts/04-devstack-apps/00-fetch-sources.sh', 'scripts/04-devstack-apps/inside-chroot/**', 'scripts/lib/**') }}
 
+      - name: WebKit-complete-cache herstellen (indien beschikbaar)
+        # Achtste cache-laag: alles hierboven + fase 5a (WebKitGTK-
+        # browserengine + volledige afhankelijkheidsketen — Nettle,
+        # GnuTLS, glib-networking, libpsl, nghttp2, libsoup3, ICU,
+        # Little CMS, libsecret, libtasn1, libwebp, OpenJPEG, Ruby,
+        # unifdef, Which, gstreamer, gst-plugins-base/bad, WebKitGTK
+        # zelf — 19 pakketten). Zelfde tar-bestand-aanpak als de
+        # eerdere zeven lagen.
+        id: lfs-webkit-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/lfs-webkit-complete-cache.tar.zst
+          key: lfs-webkit-complete-${{ hashFiles('docker/Dockerfile.build', 'scripts/01-toolchain/**', 'scripts/02-base-system/run-all.sh', 'scripts/02-base-system/ch6-*.sh', 'scripts/02-base-system/ch7-*.sh', 'scripts/02-base-system/ch8-00-fetch-sources.sh', 'scripts/02-base-system/inside-chroot/**', 'scripts/02-base-system/inside-chroot-ch8/**', 'scripts/03-blfs-desktop/run-all.sh', 'scripts/03-blfs-desktop/03a-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03a/**', 'scripts/03-blfs-desktop/03b-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03b/**', 'scripts/03-blfs-desktop/03c-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03c/**', 'scripts/03-blfs-desktop/03d-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03d/**', 'scripts/04-devstack-apps/run-all.sh', 'scripts/04-devstack-apps/00-fetch-sources.sh', 'scripts/04-devstack-apps/inside-chroot/**', 'scripts/05-browser-tilemanager/run-all.sh', 'scripts/05-browser-tilemanager/05a-00-fetch-sources.sh', 'scripts/05-browser-tilemanager/inside-chroot-05a/**', 'scripts/lib/**') }}
+
+      - name: Fase 5a (WebKitGTK) bouwen (of cache hergebruiken)
+        run: |
+          if [ "${{ steps.lfs-webkit-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "==> Cache-hit: hash van fase 1 t/m 5a ongewijzigd — uitpakken i.p.v. herbouwen (05a overgeslagen)."
+            sudo rm -rf "$RUNNER_TEMP/lfs"
+            mkdir -p "$RUNNER_TEMP/lfs"
+            sudo tar --zstd -xpf "$RUNNER_TEMP/lfs-webkit-complete-cache.tar.zst" -C "$RUNNER_TEMP/lfs"
+          else
+            echo "==> Cache-miss: 05a (WebKitGTK-afhankelijkheidsketen) nog bouwen."
+            docker run --rm --privileged \
+              -v "$RUNNER_TEMP/lfs:/mnt/lfs" \
+              -v "$GITHUB_WORKSPACE/scripts:/opt/lfs/scripts:ro" \
+              brionize-lfs-toolchain:latest \
+              bash -c "bash /opt/lfs/scripts/05-browser-tilemanager/run-all.sh"
+          fi
+
+      - name: WebKit-complete-cache-archief bouwen (alleen bij cache-miss)
+        if: steps.lfs-webkit-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo tar --zstd -cpf "$RUNNER_TEMP/lfs-webkit-complete-cache.tar.zst" -C "$RUNNER_TEMP/lfs" .
+          sudo chown "$(id -u):$(id -g)" "$RUNNER_TEMP/lfs-webkit-complete-cache.tar.zst"
+
+      - name: WebKit-complete-cache opslaan (alleen bij cache-miss)
+        if: steps.lfs-webkit-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/lfs-webkit-complete-cache.tar.zst
+          key: lfs-webkit-complete-${{ hashFiles('docker/Dockerfile.build', 'scripts/01-toolchain/**', 'scripts/02-base-system/run-all.sh', 'scripts/02-base-system/ch6-*.sh', 'scripts/02-base-system/ch7-*.sh', 'scripts/02-base-system/ch8-00-fetch-sources.sh', 'scripts/02-base-system/inside-chroot/**', 'scripts/02-base-system/inside-chroot-ch8/**', 'scripts/03-blfs-desktop/run-all.sh', 'scripts/03-blfs-desktop/03a-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03a/**', 'scripts/03-blfs-desktop/03b-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03b/**', 'scripts/03-blfs-desktop/03c-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03c/**', 'scripts/03-blfs-desktop/03d-00-fetch-sources.sh', 'scripts/03-blfs-desktop/inside-chroot-03d/**', 'scripts/04-devstack-apps/run-all.sh', 'scripts/04-devstack-apps/00-fetch-sources.sh', 'scripts/04-devstack-apps/inside-chroot/**', 'scripts/05-browser-tilemanager/run-all.sh', 'scripts/05-browser-tilemanager/05a-00-fetch-sources.sh', 'scripts/05-browser-tilemanager/inside-chroot-05a/**', 'scripts/lib/**') }}
+
       - name: Logs uploaden (ook bij falen)
         if: always()
         uses: actions/upload-artifact@v4
