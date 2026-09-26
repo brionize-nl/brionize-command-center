@@ -654,6 +654,109 @@ sub-fasen/SKIP-vlaggen nodig — één cohesieve, op zichzelf staande
   van GTK-CSS) is bewust NIET herontworpen — blijft op het standaard
   "Default"-thema.
 
+## UX-herziening: Tegel-manager & Visuele laag (2026-09-26)
+
+> **Dit vervangt het statische devilspie2-tegelindeling-plan van
+> 2026-09-23** (vaste raamtitel-regels per werkblad). Die aanpak bleek bij
+> nader sparren te rigide en werd nooit runtime geverifieerd (zie hierboven
+> — kon niet, browser/terminal ontbraken nog). Onderstaand is de bewuste,
+> vervangende richting. De reeds gebouwde devilspie2-Lua-syntax uit fase 3d
+> mag als **technisch fundament** blijven staan (het venster-verplaatsen/
+> -groottemaken werkt), maar de vaste raamtitel-matching-regels worden
+> vervangen door onderstaand systeem.
+
+### Kernidee — de tegel-manager
+Een nieuw, zelfstandig stukje software (niet BLFS, niet een bestaand
+pakket — eigen ontwikkeling) dat het hele dashboard-gevoel regelt:
+
+- **Tegelvakken zijn standaard leeg/onzichtbaar.** Geen vooraf ingevulde
+  apps. Rechtermuisknop op het bureaublad maakt een leeg vak zichtbaar en
+  laat de gebruiker kiezen wat erin komt: een draaiend vensters, een
+  PWA-snelkoppeling, of een data-widget (zie "Content-tegels" hieronder).
+- **Tegels tonen altijd echte, live inhoud** — het zijn de daadwerkelijke
+  vensters, verkleind/gepositioneerd (devilspie2/wmctrl blijft hiervoor het
+  technisch fundament), geen nagemaakte "thumbnail"-previews. Ook klein
+  blijft het dus echt bewegend/actueel.
+- **Organisch opbouwen ("constellaties") i.p.v. vooraf plannen.** De
+  gebruiker weet vaak pas tijdens het werk wat erbij hoort (bv. Claude →
+  blijkt GitHub + Cloudflare + Supabase nodig te hebben). Tegels worden
+  daarom live aan een "actieve sessie" gekoppeld via dezelfde
+  rechtermuisknop-interactie, en die combinatie wordt daarna onthouden als
+  herbruikbare groep — geen AI die raadt, het systeem leert van wat de
+  gebruiker zelf deed.
+- **Klik-op-tegel-animatie ("The Machine"-stijl, Person of Interest):**
+  klikken op een tegel (of op een lid van een constellatie) tekent een
+  verbindingslijn naar het gekoppelde icoon/tegel, gevolgd door een
+  inzoom-transitie die het venster/de app daadwerkelijk opent. Bewust
+  **geen constant live "frosted glass"-vervagingseffect** (te zwaar voor
+  software-only rendering op oude hardware, zie Architectuur/Mesa-besluit)
+  — een lichte, statische transparantie/gradient benadert het "glas"-gevoel
+  goedkoop. Gereserveerd voor dit specifieke moment, geen permanente stijl.
+- **Bouwtechniek voor animaties/menu's:** webtechniek (HTML/CSS/SVG),
+  gerenderd via de sowieso al geplande WebKitGTK-browser-laag (zie
+  "PWA/browser-engine" hieronder) — geen aparte native rendering-stack
+  nodig, hergebruik van bestaande infrastructuur.
+
+### Content-tegels — "The Machine"/FUI-esthetiek
+Naast tegels die bestaande app-vensters tonen, ook nieuwe **eigen
+data-widget-tegeltypen**, in de stijl van "The Machine" uit Person of
+Interest (FUI — Fictional User Interface — dicht-informatie-esthetiek):
+netwerk-/relatiegrafiek-tegel, dicht-tekst-scrollende data-tegel, e.d.
+Vult de bestaande Conky-HUD-tegels aan (die al gebouwd zijn, blijven
+staan), niet vervangt.
+
+### Hardware-bewuste tegel-limiet
+- First-boot-wizard detecteert beschikbaar RAM en stelt een initieel
+  verstandig maximum aantal gelijktijdig "live" tegels in (elke
+  WebKitGTK-PWA-instantie is de zwaarste losse post, ~200-400MB per stuk).
+- **Doorlopende bewaking**, niet alleen een eenmalige schatting bij
+  installatie: de tegel-manager houdt actueel geheugengebruik in de gaten
+  (zelfde databron als de Conky-HUD) en waarschuwt/remt af vóórdat het
+  systeem vastloopt.
+- **Tegels op een niet-zichtbaar werkblad pauzeren** (rendering/updates
+  bevriezen) zodra je wisselt, "opleven" bij terugkeer — houdt het
+  effectieve budget lager dan een simpele optelling van alle open tegels
+  over alle werkbladen.
+- **Multi-monitor-uitzondering:** bij "werkblad per scherm" (zie hieronder)
+  zijn alle zichtbare werkbladen tegelijk live (geen pauzeren mogelijk,
+  je ziet ze allemaal) — de limiet moet hiermee rekening houden.
+
+### Multi-monitor-gedrag
+- **Standaard bij meerdere schermen: "werkblad per scherm"** — elk van de
+  3 werkbladen (Command Center / AI Matrix / Dev Studio) krijgt een eigen
+  vast fysiek scherm, gelijktijdig zichtbaar, geen wisselen nodig. Dit is
+  bestaande, bewezen XFCE/X11-functionaliteit (geen eigen ontwikkeling).
+- **Optioneel: werkbladen uitzetten → resterend werkblad wordt uitgebreid**
+  over alle aangesloten schermen (extended desktop, xrandr), NIET
+  gespiegeld/gekloond. Meer tegel-ruimte op één werkblad i.p.v. een
+  verdeling over meerdere.
+- **Simpele instelling/knop bouwen** (in de tegel-manager of een klein
+  instellingenscherm) om tussen deze twee schermmodi te wisselen — de
+  gebruiker moet nooit zelf `xrandr`-commando's hoeven te onthouden.
+
+### Iconenset
+Een consistent, eigen icoon-thema dat bij het Command-Center-Matrix-kleurenschema
+past (diepzwart + neon-groen/cyaan), voor alle iconen (bestandsbeheer,
+applicaties, systeembalk). Aanpak: een bestaande, complete open-source
+icoonset als basis nemen en **automatisch herkleuren** (SVG-kleurwaarden
+scripted vervangen — geen handwerk per icoon), met eventueel een paar
+handmatig op maat gemaakte sleutel-iconen waar de herkleurde standaard niet
+volstaat.
+
+### PWA's/webapps — generiek, niet hardcoded
+Geen vooraf ingebouwde snelkoppelingen voor specifieke AI's. In plaats
+daarvan een **generiek "voeg webapp toe"-mechanisme** (naam, URL, hotkey)
+als onderdeel van de browserstap — de gebruiker voegt na installatie zelf
+toe wat die wil: Claude, ChatGPT, Mistral, Gemini, een eigen PWA (bv.
+"Brionize AI Framework"), of iets anders. Sluit aan bij de
+"niets hardcoded"-grondregel.
+
+### Volgorde-implicatie
+De WebKitGTK-browserstap en de tegel-manager horen nu bij elkaar (de
+animaties/menu's van de tegel-manager renderen via die browser-engine) —
+dit wordt het eerstvolgende grote bouwblok, vóór ISO-verpakking/
+installer-naar-schijf/first-boot-wizard.
+
 ## Beslislog
 - **2026-09-18 — GO gegeven.**
   - LFS/BLFS gekozen i.p.v. Debian/Ubuntu-based live-build (bewust, ondanks
@@ -703,3 +806,18 @@ sub-fasen/SKIP-vlaggen nodig — één cohesieve, op zichzelf staande
   GitHub-terminal — vastgelegd in devilspie2-Lua-regels die raamtitels
   matchen (nog te verifiëren zodra fase 4 de apps daadwerkelijk
   opzet).
+- **2026-09-26 — Uitgebreide UX-herziening + Autopilot GO tot eindproduct.**
+  Zie sectie "UX-herziening: Tegel-manager & Visuele laag" hierboven voor
+  de volledige inhoud (tegel-manager, organische constellaties,
+  multi-monitor-gedrag, hardware-bewuste tegel-limiet, FUI-content-tegels,
+  eigen icoonthema, generieke PWA-toevoeging). Vervangt bewust het
+  statische devilspie2-tegelindeling-plan van 2026-09-23.
+  Brionize gaf expliciet GO om dit hele pakket zelfstandig te bouwen
+  "tot eindproduct" zonder tussentijdse check-ins voor implementatiedetails.
+  Blijft, ook onder dit mandaat, onverminderd van kracht (Autopilot
+  Decision Boundary, Matrix §6): productdoel/scope-wijzigingen buiten wat
+  hierboven staat, nieuwe externe kosten, publicatie/verzending naar
+  buiten, destructieve acties, nieuwe privacy/security-grenzen, en
+  keuzes met meerdere geldige richtingen die het eindproduct wezenlijk
+  bepalen — die blijven worden teruggelegd, ook al is er nu maximale
+  autonomie gegeven voor al het overige.
