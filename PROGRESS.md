@@ -1305,3 +1305,62 @@ verifieerd tegen het echte `meson_options.txt`/`meson.build` uit de
 tarball, niet gegokt. Ook een volledige sweep gedaan over alle overige
 05a-scripts op vergelijkbare in-chroot netwerk-fetches (curl/wget/http)
 — geen andere gevonden. Zevende CI-run getriggerd.
+
+## 2026-09-26 — Fase 5a: zevende CI-run gefaald bij WebKitGTK zelf (LibGcrypt) + diepe root-cause-audit
+Grote mijlpaal: de zevende CI-run (36251132086) bevestigde ALLE 18
+voorafgaande stappen (nettle t/m gst-plugins-bad, incl. libsecret
+volledig gefixt) en kwam voor het eerst bij WebKitGTK's eigen
+CMake-configure-stap:
+```
+CMake Error ... Could NOT find LibGcrypt (missing: LibGcrypt_LIBRARY
+LibGcrypt_INCLUDE_DIR LibGcrypt_GpgError_LIBRARY
+LibGcrypt_GpgError_INCLUDE_DIR) (Required is at least version "1.7.0")
+```
+Root-cause: WebKitGTK's eigen `Source/cmake/OptionsGTK.cmake` heeft een
+onvoorwaardelijke `find_package(LibGcrypt 1.7.0 REQUIRED)`, niet
+vermeld in WebKitGTK's eigen BLFS-paginatekst (die noemt alleen wat
+NIEUW is t.o.v. een volledige boek-opbouw; onze bewust minimale keten
+had libgcrypt nooit gebouwd).
+
+Om niet ad-hoc van CI-failure naar CI-failure te hoppen (Anti-Patch-
+Loop-discipline), is WebKitGTK's volledige `Source/cmake/OptionsGTK.cmake`
+lokaal gedownload en helemaal doorgelopen op ALLE `find_package(...
+REQUIRED ...)`-aanroepen, elk gecontroleerd tegen wat al gebouwd is:
+- LibGcrypt: ONTBREEKT → nieuw pakket nodig (+ libgpg-error, zijn eigen
+  Required-dependency, bevestigd via de cmake-foutmelding zelf).
+- GLIB/Cairo/Libtasn1/LibXml2/SQLite3/Threads/ZLIB/JPEG/PNG/Epoxy: alle
+  al aanwezig (JPEG/PNG/Epoxy bevestigd via `grep` op fase 3b's eigen
+  scripts: libjpeg-turbo, libpng, libepoxy).
+- WebP COMPONENTS demux: bevestigd aanwezig — `11-libwebp.sh` bouwt al
+  expliciet met `--enable-libwebpdemux`.
+- HarfBuzz COMPONENTS ICU: NIET aanwezig. HarfBuzz (fase 3b) werd
+  gebouwd vóórdat ICU bestond (ICU is fase 5a stap 08); HarfBuzz's
+  meson-optie `icu` staat op `auto` en detecteerde ICU dus als
+  afwezig — de ICU-integratie (hb-icu.h + harfbuzz-icu-pkgconfig)
+  ontbreekt. Bevestigd via HarfBuzz's eigen `meson_options.txt`
+  (`icu` feature, default 'auto') en WebKitGTK's eigen
+  `FindHarfBuzz.cmake` (zoekt een apart `harfbuzz-icu`-pkgconfig-
+  bestand). Zelfde patroon als de eerder in dit project bewezen
+  freetype/fontconfig-herbouw ná HarfBuzz en Python-herbouw ná SQLite.
+- X11/Wayland/JPEGXL/Hyphen/WOFF2/AVIF/Journald/Thunder/LibBacktrace/
+  Manette/LibXslt/Libsecret/GI/GIDocgen/LibDRM/GBM/LibSpiel/Flite/
+  Enchant: elk gecontroleerd — allemaal correct voorwaardelijk (achter
+  een eigen ENABLE_*/USE_*-vlag, die bij ons al op OFF/false staat, of
+  waarvan de onderliggende feature al aanwezig is) of optioneel (geen
+  REQUIRED-keyword). Geen van deze veroorzaakt een verrassing.
+- ICU COMPONENTS data/i18n/uc: standaard-ICU-build (`08-icu.sh`, plain
+  `./configure && make && make install`) bouwt deze altijd — geen actie
+  nodig.
+
+Fix: twee nieuwe pakketten toegevoegd — libgpg-error-1.55 (BLFS 12.4,
+MD5 0430e56fd67d0751b83fc18b0f56a084) en libgcrypt-1.11.2 (BLFS 12.4,
+MD5 84ce2ad07794b987fe6341b63cf5f537, Required: libgpg-error) — beide
+MD5's lokaal geverifieerd tegen een echte download vóór opname in
+`05a-00-fetch-sources.sh`. Nieuwe stap `19-harfbuzz-rebuild.sh`
+(hergebruikt de nog aanwezige `harfbuzz-11.4.1.tar.xz` uit fase 3b —
+`$LFS/sources` blijft over alle CI-cache-lagen heen bewaard, alleen de
+uitgepakte bouwmappen worden per stap verwijderd; bevestigd door de
+workflow te doorzoeken op eventuele opschoon-stappen — geen gevonden).
+Nieuwe volgorde: 19-harfbuzz-rebuild, 20-libgpg-error, 21-libgcrypt,
+22-webkitgtk (hernoemd van 19). Achtste CI-run getriggerd — dit zou
+voor het eerst de VOLLEDIGE fase 5a moeten bewijzen.

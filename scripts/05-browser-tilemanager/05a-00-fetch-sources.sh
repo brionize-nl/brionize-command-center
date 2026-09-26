@@ -41,6 +41,13 @@ declare -A URLS=(
   [gst-plugins-base-1.26.5.tar.xz]="https://gstreamer.freedesktop.org/src/gst-plugins-base/gst-plugins-base-1.26.5.tar.xz"
   [gst-plugins-bad-1.26.5.tar.xz]="https://gstreamer.freedesktop.org/src/gst-plugins-bad/gst-plugins-bad-1.26.5.tar.xz"
 
+  # libgcrypt-keten (WebKitGTK's eigen hard vereiste "LibGcrypt"-check
+  # in Source/cmake/OptionsGTK.cmake — ontdekt via de zevende CI-run
+  # (2026-09-26), niet in de oorspronkelijke 19-pakketten-audit, zie
+  # BLUEPRINT.md)
+  [libgpg-error-1.55.tar.bz2]="https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-1.55.tar.bz2"
+  [libgcrypt-1.11.2.tar.bz2]="https://www.gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-1.11.2.tar.bz2"
+
   # WebKitGTK zelf
   [webkitgtk-2.48.5.tar.xz]="https://webkitgtk.org/releases/webkitgtk-2.48.5.tar.xz"
 )
@@ -67,6 +74,9 @@ declare -A MD5=(
   [gstreamer-1.26.5.tar.xz]="2585de32253e8b159cbddf92b21b0261"
   [gst-plugins-base-1.26.5.tar.xz]="b7213409f50916a7f8e3c5bb59ea3b2d"
   [gst-plugins-bad-1.26.5.tar.xz]="b4d99dc0fddc0a54d96b0389830f283f"
+
+  [libgpg-error-1.55.tar.bz2]="0430e56fd67d0751b83fc18b0f56a084"
+  [libgcrypt-1.11.2.tar.bz2]="84ce2ad07794b987fe6341b63cf5f537"
 
   [webkitgtk-2.48.5.tar.xz]="23e26bc4e30b80462cb1030fab352409"
 )

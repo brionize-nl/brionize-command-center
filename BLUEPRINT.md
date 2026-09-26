@@ -806,6 +806,43 @@ WebKitGTK-kiosk-shell + generiek "voeg webapp toe"-mechanisme), 05c
 klik-animatie, hardware-bewuste tegel-limiet met live RAM-monitoring,
 multi-monitor-toggle, icoonthema).
 
+**Aanvulling na CI-evidence (2026-09-26): 21 i.p.v. 19 pakketten +
+1 herbouw.** De echte CI-runs brachten twee categorieën verborgen
+afhankelijkheden aan het licht die de oorspronkelijke boek-pagina-audit
+niet had gevonden (BLFS's eigen dependency-lijsten noemen alleen wat
+NIEUW is t.o.v. een volledige, in boek-volgorde opgebouwde BLFS-desktop
+— onze bewust minimale/afwijkende opbouw miste daardoor twee dingen
+die een volledige BLFS-opbouw als "voetnoot" behandelt):
+- **libgpg-error-1.55 + libgcrypt-1.11.2** (2 nieuwe pakketten, in die
+  volgorde): WebKitGTK's eigen `Source/cmake/OptionsGTK.cmake` bevat
+  een onvoorwaardelijke `find_package(LibGcrypt 1.7.0 REQUIRED)` —
+  niet vermeld in WebKitGTK's eigen BLFS-paginatekst, wel hard in de
+  echte cmake-bron. Ontdekt via de zevende CI-run ("Could NOT find
+  LibGcrypt") + bevestigd via lokale download van de echte
+  `OptionsGTK.cmake`/`FindLibGcrypt.cmake`.
+- **HarfBuzz-11.4.1 herbouw** (geen nieuw pakket, wel een nieuwe
+  bouwstap): HarfBuzz werd al in fase 3b gebouwd, TOEN ICU nog niet
+  bestond. HarfBuzz's meson-optie `icu` staat op `auto` en detecteerde
+  ICU dus als afwezig — de ICU-integratie werd nooit gebouwd, terwijl
+  WebKitGTK's `find_package(HarfBuzz 2.7.4 REQUIRED COMPONENTS ICU)`
+  die apart nodig heeft. Proactief ontdekt via lokale audit van
+  `FindHarfBuzz.cmake` (niet afgewacht tot CI dit zou bevestigen) —
+  zelfde herbouw-patroon als freetype/fontconfig ná HarfBuzz (fase 3b)
+  en Python ná SQLite (fase 4).
+
+Volledige lijst van kleinere, per-pakket flag-fixes die tijdens de
+eerste CI-iteraties nodig waren (elk root-cause, geen workarounds):
+libtasn1 moest vóór GnuTLS gebouwd worden (volgorde, niet ontbrekend);
+GnuTLS heeft `--with-included-unistring` + `--without-p11-kit` nodig;
+libsoup3 heeft `-D tests=false` nodig (test-suite linkt tegen
+PKCS11-functies die GnuTLS zonder p11-kit niet heeft); libsecret heeft
+`-D crypto=gnutls` (i.p.v. het standaard maar niet-gebouwde libgcrypt-
+backend — inmiddels wel beschikbaar sinds de bovenstaande toevoeging,
+maar gnutls-backend blijft de gekozen optie, geen reden om terug te
+draaien) + `-D vapi=false` + `-D manpage=false` nodig. Volledige
+details en CI-run-nummers per fix: zie PROGRESS.md, reeks
+"Fase 5a: N-de CI-run gefaald" (2026-09-26).
+
 ## Beslislog
 - **2026-09-18 — GO gegeven.**
   - LFS/BLFS gekozen i.p.v. Debian/Ubuntu-based live-build (bewust, ondanks

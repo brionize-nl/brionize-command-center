@@ -27,7 +27,10 @@ STEPS=(
   "16-gstreamer.sh"
   "17-gst-plugins-base.sh"
   "18-gst-plugins-bad.sh"
-  "19-webkitgtk.sh"
+  "19-harfbuzz-rebuild.sh"
+  "20-libgpg-error.sh"
+  "21-libgcrypt.sh"
+  "22-webkitgtk.sh"
 )
 
 for step in "${STEPS[@]}"; do
