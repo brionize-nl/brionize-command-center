@@ -1,0 +1,83 @@
+#!/bin/bash
+# command-center-webapp-add — generiek "voeg webapp toe"-mechanisme
+# (naam, URL, hotkey). Draait als de eindgebruiker, NIET tijdens de
+# systeembouw — dit is het runtime-stuk van de browserstap uit
+# BLUEPRINT.md "UX-herziening: Tegel-manager & Visuele laag": "Geen
+# vooraf ingebouwde snelkoppelingen voor specifieke AI's. In plaats
+# daarvan een generiek 'voeg webapp toe'-mechanisme (naam, URL,
+# hotkey)... de gebruiker voegt na installatie zelf toe wat die wil."
+#
+# Effect van één aanroep:
+#   1. Schrijft/overschrijft een groep in
+#      ~/.config/command-center/webapps.ini (GLib GKeyFile-formaat —
+#      dezelfde bibliotheek die command-center-kiosk gebruikt om het
+#      terug te lezen, geen aparte JSON-afhankelijkheid nodig).
+#   2. Registreert de hotkey via xfconf-query onder het
+#      "/commands/custom/<hotkey>"-pad van het "xfce4-keyboard-
+#      shortcuts"-channel — hetzelfde publieke schema dat XFCE's eigen
+#      instellingen-dialoog gebruikt voor door de gebruiker toegevoegde
+#      sneltoetsen (bevestigd tegen libxfce4ui's eigen
+#      libxfce4kbd-private/xfce4-keyboard-shortcuts.xml, dat de
+#      parallelle "/commands/default/..."-groep voor de
+#      fabrieksstandaarden laat zien; "custom" is XFCE's eigen
+#      mechanisme voor gebruikersoverrides/-toevoegingen op datzelfde
+#      niveau).
+#
+# De sneltoets roept command-center-kiosk aan met --webapp=NAME (niet
+# de URL zelf) — zo hoeft een latere URL-wijziging de sneltoets niet
+# opnieuw te registreren.
+set -euo pipefail
+
+usage() {
+  echo "Gebruik: command-center-webapp-add --name=\"NAAM\" --url=\"URL\" --hotkey=\"<Super>c\"" >&2
+  exit 1
+}
+
+name=""
+url=""
+hotkey=""
+
+for arg in "$@"; do
+  case "$arg" in
+    --name=*)   name="${arg#--name=}" ;;
+    --url=*)    url="${arg#--url=}" ;;
+    --hotkey=*) hotkey="${arg#--hotkey=}" ;;
+    *) usage ;;
+  esac
+done
+
+[ -n "$name" ] && [ -n "$url" ] && [ -n "$hotkey" ] || usage
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/command-center"
+CONFIG_FILE="$CONFIG_DIR/webapps.ini"
+mkdir -pv "$CONFIG_DIR"
+[ -f "$CONFIG_FILE" ] || : > "$CONFIG_FILE"
+
+# GKeyFile-groep toevoegen/vervangen via python3's configparser (al
+# aanwezig sinds hoofdstuk 8 — geen nieuwe afhankelijkheid). GKeyFile
+# en configparser zijn voor dit eenvoudige gebruik (platte
+# [groep]/key=value, geen locale-suffixen) compatibel.
+python3 - "$CONFIG_FILE" "$name" "$url" "$hotkey" << 'PYEOF'
+import configparser
+import sys
+
+config_file, name, url, hotkey = sys.argv[1:5]
+
+parser = configparser.ConfigParser()
+parser.read(config_file)
+parser[name] = {"URL": url, "Hotkey": hotkey}
+
+with open(config_file, "w") as f:
+    parser.write(f)
+PYEOF
+
+echo "==> $name (URL: $url) opgeslagen in $CONFIG_FILE"
+
+# Sneltoets registreren — "-n" maakt de eigenschap aan als die nog
+# niet bestaat (xfconf-query's eigen vlag hiervoor).
+xfconf-query -c xfce4-keyboard-shortcuts \
+  -p "/commands/custom/$hotkey" \
+  -n -t string \
+  -s "command-center-kiosk --webapp=$name"
+
+echo "==> Sneltoets '$hotkey' gekoppeld aan webapp '$name'"

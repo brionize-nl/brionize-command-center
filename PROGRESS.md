@@ -1423,5 +1423,51 @@ GnuTLS `--with-included-unistring`+`--without-p11-kit`, libsoup3
 `-D USE_AVIF=OFF`+`-D USE_JPEGXL=OFF`. Elke fix is hierboven met de
 exacte foutmelding, root-cause en onderbouwing gedocumenteerd.
 
-**Eerstvolgende stap:** fase 5b (minimale WebKitGTK-kiosk-shell +
-generiek "voeg webapp toe"-mechanisme) — nog niet gestart.
+## 2026-09-26 — Fase 5b: kiosk-shell + generiek webapp-mechanisme geschreven
+Direct doorgegaan naar het volgende bouwblok uit de UX-herziening
+("PWA's/webapps — generiek, niet hardcoded"): het eerste stukje EIGEN
+software in dit project (geen BLFS-pakket). Twee onderdelen:
+- `command-center-kiosk.c` — minimale WebKitGTK-kiosk-shell (C, tegen
+  de al aanwezige `webkit2gtk-4.1`+`gtk+-3.0`, geen nieuwe
+  afhankelijkheid). `--webapp=NAME` (zoekt URL op in
+  `~/.config/command-center/webapps.ini`) of `--url=URL --title=T`.
+  `G_APPLICATION_NON_UNIQUE` zodat meerdere webapps gelijktijdig eigen
+  vensters krijgen. Venstertitel = webapp-naam, WM_CLASS altijd vast
+  "CommandCenterKiosk" — generiek identificatiekenmerk voor de
+  toekomstige tile-manager (fase 5c), i.p.v. de oude hardcoded
+  per-AI-titelregels uit fase 3d's `command-center-tiling.lua` (die nu
+  effectief legacy is, vervangen door de UX-herziening — nog niet
+  verwijderd, dat is een keuze voor fase 5c).
+- `command-center-webapp-add` (bash) — schrijft naam/URL/hotkey naar
+  `webapps.ini` (GKeyFile-formaat via een ingebedde python3-
+  configparser-aanroep) en registreert de hotkey via `xfconf-query`
+  onder `/commands/custom/<hotkey>` (xfce4-keyboard-shortcuts-channel
+  — schema bevestigd tegen libxfce4ui's eigen default-XML-bestand,
+  zelfde bron als fase 3d's workspace-hotkeys al gebruikte).
+
+pkg-config-modulenaam voor WebKitGTK (`webkit2gtk-4.1`) bevestigd tegen
+de echte WebKitGTK-broncode (`webkitgtk.pc.in`'s `Libs:`-regel +
+`OptionsGTK.cmake`'s `WEBKITGTK_API_INFIX`/`WEBKITGTK_API_VERSION` voor
+onze GTK3+libsoup3-combinatie) — niet gegokt.
+
+Kon niet lokaal compile-testen (geen webkit2gtk-4.1/gtk+-3.0-dev op de
+Asus, en dat mag ook niet — bouwen gebeurt uitsluitend via CI/Docker,
+nooit lokaal). Wel zorgvuldig tegen de echte GTK3/WebKitGTK-/GLib-API's
+nagelopen (o.a. `g_set_prgname()`/`gdk_set_program_class()` i.p.v. het
+verouderde `gtk_window_set_wmclass()`). Wordt voor het eerst echt
+bewezen via de eerstkomende CI-run.
+
+Build-infrastructuur: negende CI-cache-laag (`lfs-kiosk-shell-complete-
+*`) toegevoegd aan `build-iso.yml`, `SKIP_KIOSK_SHELL`-vlag in
+`scripts/05-browser-tilemanager/run-all.sh` (analoog aan
+`SKIP_WEBKIT`). Proactief (vóór enige CI-fout, lering van de eerdere
+fase-3c-scoping-bug toegepast) de fase-5a-bouwstap `-e
+SKIP_KIOSK_SHELL=true` en de fase-5b-bouwstap `-e SKIP_WEBKIT=true`
+gegeven, zodat de twee cache-lagen zuiver gescheiden blijven i.p.v.
+elkaars werk stilzwijgend mee te bouwen. Alle nieuwe bash-scripts
+`bash -n`-gecontroleerd (OK), workflow-YAML met
+`python3 -c "import yaml; yaml.safe_load(...)"` gevalideerd (OK).
+CI-run wordt na deze commit getriggerd.
+
+**Eerstvolgende stap na bewijs:** fase 5c (tegel-manager-kern) — nog
+niet gestart.

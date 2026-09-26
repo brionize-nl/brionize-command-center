@@ -757,6 +757,61 @@ animaties/menu's van de tegel-manager renderen via die browser-engine) —
 dit wordt het eerstvolgende grote bouwblok, vóór ISO-verpakking/
 installer-naar-schijf/first-boot-wizard.
 
+## Fase 5b — kiosk-shell + generiek webapp-mechanisme (2026-09-26)
+Eerste stukje **eigen software** in dit project (geen BLFS-pakket).
+Twee onderdelen, beide onder `scripts/05-browser-tilemanager/`:
+
+**`command-center-kiosk`** (C, `05b-kiosk-shell/command-center-kiosk.c`)
+— toont één webapp (naam + URL) in een gewoon, door de window-manager
+beheerbaar venster (geen adresbalk/menu/toolbar, WEL een normale
+titelbalk — sluitbaar/verplaatsbaar/herformaatbaar). Gebouwd tegen de
+al aanwezige `webkit2gtk-4.1` + `gtk+-3.0` (pkg-config-modulenaam
+bevestigd tegen WebKitGTK's eigen `Source/WebKit/gtk/webkitgtk.pc.in` +
+`WEBKITGTK_API_INFIX="2"`/`WEBKITGTK_API_VERSION="4.1"` uit
+`OptionsGTK.cmake` — geen nieuwe afhankelijkheid). Twee aanroepvormen:
+`--webapp=NAME` (zoekt URL op in `~/.config/command-center/
+webapps.ini`) of `--url=URL --title=TITEL` (direct, voor ad-hoc
+gebruik). `G_APPLICATION_NON_UNIQUE` is bewust gezet — anders zou een
+tweede webapp-tegel alleen het eerste geopende venster activeren i.p.v.
+een nieuw venster openen, terwijl de tegel-manager meerdere webapps
+gelijktijdig live moet kunnen tonen. Venstertitel = de webapp-naam
+(generiek, niet hardcoded), WM_CLASS altijd vast "CommandCenterKiosk"
+(via `g_set_prgname()`/`gdk_set_program_class()`, niet het verouderde
+`gtk_window_set_wmclass()`) — dit is bewust het enige
+identificatiekenmerk dat toekomstige tile-manager-code (fase 5c) nodig
+heeft, in tegenstelling tot de oude, door de UX-herziening vervangen
+aanpak in `scripts/03-blfs-desktop/inside-chroot-03d/
+command-center-tiling.lua` die specifieke productnamen ("Claude",
+"ChatGPT", ...) hardcodeerde.
+
+**`command-center-webapp-add`** (bash) — het daadwerkelijke "voeg
+webapp toe"-mechanisme (naam, URL, hotkey) uit de UX-herziening.
+Effect van één aanroep: (1) schrijft een groep naar
+`~/.config/command-center/webapps.ini` (GLib GKeyFile-formaat, via een
+ingebedde python3-configparser-aanroep — geen nieuwe JSON-
+afhankelijkheid, python3 is al aanwezig sinds hoofdstuk 8); (2)
+registreert de hotkey via `xfconf-query -c xfce4-keyboard-shortcuts -p
+"/commands/custom/<hotkey>" -n -t string -s "command-center-kiosk
+--webapp=<naam>"` — het publieke `/commands/custom/`-schema van XFCE's
+eigen sneltoetsen-instellingen-dialoog, bevestigd tegen libxfce4ui's
+eigen `libxfce4kbd-private/xfce4-keyboard-shortcuts.xml` (die de
+parallelle `/commands/default/`-groep voor fabrieksstandaarden laat
+zien). De sneltoets roept `command-center-kiosk` aan met
+`--webapp=NAME`, niet de URL zelf — een latere URL-wijziging hoeft de
+sneltoets dus niet opnieuw te registreren.
+
+Build-mechanisme: geen `fetch_verified()` nodig (eigen broncode, geen
+externe download) — de bronmap `05b-kiosk-shell/` wordt via
+bind-mount zichtbaar gemaakt binnen de chroot (zelfde patroon als de
+scripts zelf), gewoon gecompileerd met `gcc`+`pkg-config`, geïnstalleerd
+naar `/usr/local/bin/`. Negende CI-cache-laag
+(`lfs-kiosk-shell-complete-*`) toegevoegd, `SKIP_KIOSK_SHELL=true`
+binnen `scripts/05-browser-tilemanager/run-all.sh` (analoog aan
+`SKIP_WEBKIT`); de fase-5a-bouwstap kreeg proactief
+`-e SKIP_KIOSK_SHELL=true` (en de fase-5b-bouwstap `-e
+SKIP_WEBKIT=true`) om de twee cache-lagen zuiver gescheiden te houden —
+zelfde scoping-discipline als eerder toegepast bij fase 3.
+
 ## Fase 5a — WebKitGTK-afhankelijkheidsketen (2026-09-26, BEWEZEN GROEN)
 **Status: voltooid en CI-bewezen** (run 36254993822, ✓, 4u18m3s,
 achtste cache-laag `lfs-webkit-complete-*` succesvol opgeslagen). Na
