@@ -1267,3 +1267,20 @@ toegevoegd aan libsoup3's meson-setup, verifieerd tegen het echte
 `meson_options.txt` uit de tarball (niet gegokt). De daadwerkelijke
 libsoup3-library-functionaliteit blijft ongewijzigd; alleen de
 unit-tests worden niet meer gecompileerd. Vijfde CI-run getriggerd.
+
+## 2026-09-26 — Fase 5a: vijfde CI-run gefaald (libsecret/libgcrypt), gefixt
+Vijfde CI-run (36249234320) bevestigde de libsoup3-fix en kwam nog drie
+stappen verder (ICU, Little CMS beide geslaagd), maar faalde bij
+`10-libsecret.sh`:
+```
+Run-time dependency libgcrypt found: NO (tried pkgconfig and config-tool)
+../meson.build:41:15: ERROR: Dependency "libgcrypt" not found
+```
+Root-cause: libsecret's meson-optie `crypto` (keuzes: libgcrypt/gnutls/
+disabled) staat standaard op `libgcrypt` — hard vereist, geen
+automatische fallback zoals eerder aangenomen. Verifieerd tegen het
+echte `meson_options.txt` uit de tarball. Fix: `-D crypto=gnutls` —
+libsecret's eigen ingebouwde alternatief voor transport-encryptie,
+en GnuTLS-3.8.10 staat al eerder in onze keten (stap 03) — hergebruik
+i.p.v. een 20e los systeempakket (libgcrypt) toevoegen. Zesde CI-run
+getriggerd.
