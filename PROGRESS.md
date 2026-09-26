@@ -1284,3 +1284,24 @@ libsecret's eigen ingebouwde alternatief voor transport-encryptie,
 en GnuTLS-3.8.10 staat al eerder in onze keten (stap 03) — hergebruik
 i.p.v. een 20e los systeempakket (libgcrypt) toevoegen. Zesde CI-run
 getriggerd.
+
+## 2026-09-26 — Fase 5a: zesde CI-run gefaald (vapigen), + proactieve manpage-fix
+Zesde CI-run (36250034797) bevestigde de crypto=gnutls-fix ("Run-time
+dependency gnutls found: YES 3.8.10"), maar faalde vervolgens op:
+```
+Program vapigen found: NO
+../libsecret/meson.build:153:27: ERROR: Program 'vapigen' not found or not executable
+```
+Fix: `-D vapi=false` — we bouwen nergens Vala/vapigen in deze keten.
+
+Tegelijk proactief (nog niet als CI-fout gezien, maar bevestigd via de
+echte bron) ook `-D manpage=false` toegevoegd: `docs/man/meson.build`
+haalt tijdens de build een docbook.xsl-stylesheet op van een externe
+URL via xsltproc. Fase 5's `run-all.sh` kopieert (nog) geen
+`/etc/resolv.conf` naar de chroot (anders dan fase 4's `run-all.sh`),
+dus dit zou hoe dan ook gefaald zijn — en een build laten leunen op
+een externe netwerk-fetch tijdens CI is sowieso fragiel. Beide keren
+verifieerd tegen het echte `meson_options.txt`/`meson.build` uit de
+tarball, niet gegokt. Ook een volledige sweep gedaan over alle overige
+05a-scripts op vergelijkbare in-chroot netwerk-fetches (curl/wget/http)
+— geen andere gevonden. Zevende CI-run getriggerd.

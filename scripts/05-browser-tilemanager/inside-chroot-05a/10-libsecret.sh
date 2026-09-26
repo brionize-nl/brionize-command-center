@@ -13,6 +13,21 @@
 # een 'gnutls'-alternatief voor exact deze transport-encryptie-taak —
 # en GnuTLS-3.8.10 staat al eerder in onze eigen keten (03-gnutls.sh).
 # Hergebruik i.p.v. een 20e los systeempakket (libgcrypt) toevoegen.
+#
+# '-D vapi=false' — zesde CI-run (2026-09-26) faalde vervolgens op
+# "Program 'vapigen' not found" (Vala-bindings-generator, standaard
+# 'true'). We bouwen nergens Vala/vapigen in deze keten en hebben er
+# ook verder geen gebruik voor — uitschakelen i.p.v. het toevoegen van
+# een Vala-toolchain enkel voor deze ene optionele binding.
+#
+# '-D manpage=false' — proactief uitgeschakeld (nog niet als CI-fout
+# gezien, wel bevestigd via de echte bron: `docs/man/meson.build`
+# haalt tijdens de build een docbook.xsl-stylesheet op van
+# http://docbook.sourceforge.net/... via xsltproc). Fase 5's
+# `run-all.sh` kopieert (nog) geen /etc/resolv.conf naar de chroot
+# (anders dan fase 4's run-all.sh) en het is sowieso fragiel om een
+# build afhankelijk te maken van een externe netwerk-fetch tijdens
+# CI — vermeden i.p.v. afgewacht tot dit alsnog faalt.
 set -euo pipefail
 cd /sources
 tar -xf libsecret-0.21.7.tar.xz
@@ -25,6 +40,8 @@ meson setup --prefix=/usr       \
     --buildtype=release \
     -D gtk_doc=false    \
     -D crypto=gnutls    \
+    -D vapi=false       \
+    -D manpage=false    \
     ..
 ninja
 ninja install
