@@ -653,6 +653,25 @@ sub-fasen/SKIP-vlaggen nodig — één cohesieve, op zichzelf staande
 - xfwm4's eigen randdecoratie-/titelbalk-thema (bitmap-gebaseerd, los
   van GTK-CSS) is bewust NIET herontworpen — blijft op het standaard
   "Default"-thema.
+- **(2026-09-26, NIEUW) CI-cache-strategie stoot tegen GitHub's
+  10GB-per-repo-limiet.** Negen cumulatieve cache-lagen die elk een
+  VOLLEDIGE momentopname van `$LFS` bewaren, groeien onvermijdelijk
+  richting/over die grens (al één keer geraakt, zie PROGRESS.md
+  2026-09-26 "Ontdekt: CI-cache-strategie stoot tegen GitHub's
+  10GB-limiet" voor de volledige toedracht + de reactieve opruiming die
+  toen is toegepast). Structureel echt beslispunt, NIET zelf
+  doorgevoerd: periodiek handmatig opruimen (reactief, blijft
+  terugkomen) versus een herontwerp naar `actions/cache`'s eigen
+  `restore-keys`-prefix-fallback-mechanisme (één cache-key-patroon
+  i.p.v. negen parallelle, handmatig onderhouden lagen). Wordt
+  relevanter naarmate er nog meer sub-fasen (5c, ISO-verpakking, ...)
+  bijkomen.
+- Twee bullets hierboven ("PWA-snelkoppelingen... uitgesteld" en
+  "devilspie2-tegelregels... geen runtime-verificatie mogelijk") zijn
+  ACHTERHAALD sinds fase 5a/5b (browser-engine + kiosk-shell zijn er nu)
+  — bewust nog niet herschreven/verwijderd, dat hoort bij het
+  opschonen/afronden van fase 5c (waar de daadwerkelijke devilspie2-
+  regels en runtime-verificatie thuishoren).
 
 ## UX-herziening: Tegel-manager & Visuele laag (2026-09-26)
 

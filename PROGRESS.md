@@ -1471,3 +1471,59 @@ CI-run wordt na deze commit getriggerd.
 
 **Eerstvolgende stap na bewijs:** fase 5c (tegel-manager-kern) — nog
 niet gestart.
+
+## 2026-09-26 — Ontdekt: CI-cache-strategie stoot tegen GitHub's 10GB-limiet
+Eerste CI-run voor fase 5b (36271545417) faalde onverwacht al bij het
+BEGIN (hoofdstuk 6/7, opnieuw helemaal herbouwd i.p.v. cache-hergebruik)
+en liep uiteindelijk vast op een op zichzelf onschuldige, tijdelijke
+netwerkstoring bij het ophalen van `bc-7.0.3.tar.xz` (officiële URL +
+alle fallbacks faalden die paar minuten; lokaal getest vanaf hier: werkt
+gewoon weer, MD5 klopt — een transiënte hik, geen echt versie-
+beslispunt, geen codewijziging nodig).
+
+**Root-cause van de ONVERWACHTE volledige herbouw (het echte
+probleem):** met negen cumulatieve cache-lagen die elk een VOLLEDIGE
+momentopname van `$LFS` bewaren (niet een incrementeel verschil), was
+de totale cache-opslag van deze repo opgelopen tot ~11,6GB — over
+GitHub Actions' harde limiet van 10GB per repo. GitHub verwijdert dan
+automatisch de minst-recent-gebruikte cache-items om ruimte te maken;
+dat trof hier de `bootstrap`-, `ch8-complete`- en `xorg-complete`-lagen
+(die daardoor onnodig van de grond af herbouwd moesten worden).
+
+**Bewuste opruimactie:** de vier duidelijk overbodige lagen
+(`gtk3-complete`, `xfce-core-complete`, `xfce-extras-complete`,
+`devstack-complete`) verwijderd via `gh cache delete` — elk daarvan is
+een strikte deelverzameling van de nieuwere `webkit-complete`-laag
+(die alles van fase 1 t/m 5a al bevat), dus zonder informatieverlies,
+en cache-items zijn per ontwerp altijd herbouwbaar. Totale opslag ging
+van ~11,6GB naar ~4,3GB.
+
+**Bijwerking ontdekt ná deze opruiming (evidence, niet vooraf bedacht):**
+de workflow heeft GEEN "sla eerdere lagen over als een latere laag al
+cache-hit is"-logica — elke laag-stap controleert alleen zijn EIGEN
+cache-key, onafhankelijk van wat later in de sequentiële YAML-volgorde
+gebeurt. Dat betekent dat de eerstvolgende run hoofdstuk 8 t/m devstack
+zal HERBOUWEN (want die cache-items zijn nu weg) ook al is de nieuwere
+`webkit-complete`-laag zelf nog intact en zal die uiteindelijk toch
+gewoon een cache-hit geven — waarna die herbouwde tussenlagen alsnog
+weggegooid worden bij het uitpakken van de webkit-cache. Dit is een
+eenmalige verspilling (een paar uur CI-tijd), geen herhaalde/blijvende
+fout, en na deze ene run zijn ch8-complete/xorg-complete weer vers
+gecached.
+
+**Echt, structureel beslispunt — teruggelegd, niet zelf doorgevoerd:**
+de onderliggende architectuurkeuze (N losse, elk-een-volledige-
+momentopname-cache-lagen, handmatig onderhouden) is op de lange termijn
+niet vol te houden zodra er nog meer sub-fasen (5c, ISO-verpakking, ...)
+bijkomen — elke nieuwe laag duwt de totale opslag weer richting de
+10GB-grens. Twee eerlijke alternatieven, geen van beide stilzwijgend
+doorgevoerd: (a) periodiek handmatig oude/overbodige lagen opruimen
+(gedaan, reactief, blijft terugkomen), of (b) de cache-strategie
+herontwerpen naar `actions/cache`'s eigen `restore-keys`-fallback-
+mechanisme (één cache-key-patroon met prefix-matching op de "meest
+recente bruikbare" cache, i.p.v. negen handmatig bijgehouden parallelle
+lagen) — een echte herstructurering van kern-CI-infrastructuur, met
+eigen risico's, die niet halverwege een lopende bouw-iteratie moet
+gebeuren. Voor nu: doorgegaan met de bestaande structuur + reactieve
+opruiming, en deze afweging hier vastgelegd voor een bewuste
+vervolgstap.
