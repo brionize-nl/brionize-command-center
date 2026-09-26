@@ -25,6 +25,23 @@
 # stilzwijgende scope-verkleining), te heroverwegen als bubblewrap
 # ooit alsnog gebouwd wordt. Overige vlaggen letterlijk het boek's
 # GTK-3-bouwcommando.
+#
+# Achtste CI-run (2026-09-26) faalde vervolgens op "Enchant is needed
+# for ENABLE_SPELLCHECK" — WebKitGTK's eigen OptionsGTK.cmake zet
+# ENABLE_SPELLCHECK/USE_AVIF/USE_JPEGXL alle drie op ON specifiek voor
+# de GTK-port (WEBKIT_OPTION_DEFAULT_PORT_VALUE), los van hun globale
+# standaardwaarde. Volledig lokaal nagelopen (alle
+# WEBKIT_OPTION_DEFAULT_PORT_VALUE-regels in OptionsGTK.cmake) om dit
+# in één keer af te ronden i.p.v. drie losse CI-rondes:
+# - ENABLE_SPELLCHECK → Enchant nodig (spellingscontrole; niet nodig
+#   voor onze kiosk-browser/tegel-manager-use-case) → OFF.
+# - USE_AVIF/USE_JPEGXL → libavif/libjxl nodig (extra beeldformaten;
+#   geen van onze AI-webapps hangt hiervan af, en beide hebben zelf
+#   weer zware afhankelijkheidsketens (libaom/dav1d resp. highway/
+#   brotli)) → beide OFF, zelfde minimale-footprint-redenering als de
+#   al bestaande ENABLE_GAMEPAD/ENABLE_SPEECH_SYNTHESIS-keuzes.
+# - USE_LCMS staat ook op ON via dit mechanisme, maar dat klopt met
+#   onze eigen keuze: lcms2 is al gebouwd (stap 09) — geen wijziging.
 set -euo pipefail
 cd /sources
 tar -xf webkitgtk-2.48.5.tar.xz
@@ -50,6 +67,9 @@ cmake -D CMAKE_BUILD_TYPE=Release     \
     -D ENABLE_BUBBLEWRAP_SANDBOX=OFF \
     -D USE_SYSPROF_CAPTURE=NO       \
     -D ENABLE_SPEECH_SYNTHESIS=OFF  \
+    -D ENABLE_SPELLCHECK=OFF        \
+    -D USE_AVIF=OFF                 \
+    -D USE_JPEGXL=OFF               \
     -W no-dev -G Ninja ..
 ninja -j2
 ninja install

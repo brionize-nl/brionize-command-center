@@ -1364,3 +1364,35 @@ workflow te doorzoeken op eventuele opschoon-stappen — geen gevonden).
 Nieuwe volgorde: 19-harfbuzz-rebuild, 20-libgpg-error, 21-libgcrypt,
 22-webkitgtk (hernoemd van 19). Achtste CI-run getriggerd — dit zou
 voor het eerst de VOLLEDIGE fase 5a moeten bewijzen.
+
+## 2026-09-26 — Fase 5a: achtste CI-run — grote mijlpaal (alle 21 dependency-stappen groen) + laatste WebKitGTK-configure-fixes
+Achtste CI-run (36253204360) bevestigde de libgcrypt/HarfBuzz-fix
+volledig: alle 21 voorafgaande stappen (nettle t/m libgcrypt) slaagden
+voor het eerst zonder onderbreking. WebKitGTK's eigen CMake-configure
+kwam nu veel verder (Threads/WebP/ATSPI/GTK/LibSoup/LibXslt/Libsecret/
+GI/LibDRM/GBM allemaal gevonden), maar faalde op:
+```
+Checking for module 'enchant-2' ... not found
+Checking for module 'enchant' ... not found
+CMake Error at Source/cmake/OptionsGTK.cmake:365 (message):
+  Enchant is needed for ENABLE_SPELLCHECK
+```
+Root-cause: WebKitGTK's `OptionsGTK.cmake` zet via
+`WEBKIT_OPTION_DEFAULT_PORT_VALUE` drie features specifiek voor de
+GTK-port op ON (los van hun globale standaard): `ENABLE_SPELLCHECK`,
+`USE_AVIF`, `USE_JPEGXL`. Om niet drie keer opnieuw CI te draaien is
+het VOLLEDIGE `WEBKIT_OPTION_DEFAULT_PORT_VALUE`-blok in
+`OptionsGTK.cmake` in één keer nagelopen tegen wat al gebouwd is:
+- `ENABLE_SPELLCHECK` → Enchant nodig, niet relevant voor onze
+  kiosk-browser → OFF.
+- `USE_AVIF`/`USE_JPEGXL` → libavif/libjxl nodig (elk met een eigen
+  zware afhankelijkheidsketen: libaom/dav1d resp. highway/brotli) →
+  geen van onze AI-webapps heeft dit nodig → beide OFF.
+- `USE_LCMS` staat ook op ON via dit mechanisme — klopt met onze eigen
+  keuze, lcms2 is al gebouwd (stap 09), geen wijziging nodig.
+- `USE_WOFF2`/`ENABLE_GAMEPAD`/`ENABLE_WEBDRIVER`/`ENABLE_SPEECH_
+  SYNTHESIS` staan ook op ON via dit mechanisme, maar worden al door
+  onze eigen expliciete `-D`-vlaggen overruled — geen actie nodig.
+Drie nieuwe vlaggen toegevoegd aan `22-webkitgtk.sh`:
+`-D ENABLE_SPELLCHECK=OFF -D USE_AVIF=OFF -D USE_JPEGXL=OFF`. Negende
+CI-run getriggerd.
