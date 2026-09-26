@@ -1396,3 +1396,32 @@ het VOLLEDIGE `WEBKIT_OPTION_DEFAULT_PORT_VALUE`-blok in
 Drie nieuwe vlaggen toegevoegd aan `22-webkitgtk.sh`:
 `-D ENABLE_SPELLCHECK=OFF -D USE_AVIF=OFF -D USE_JPEGXL=OFF`. Negende
 CI-run getriggerd.
+
+## 2026-09-26 — MIJLPAAL: fase 5a (WebKitGTK) volledig groen
+Negende CI-run (36254993822) — ✓ volledig geslaagd, alle stappen groen
+inclusief de nieuwe achtste cache-laag (`WebKit-complete-cache
+opslaan`), `$LFS archiveren` en `Base-system-artifact uploaden`. Reële
+bewijzen uit de ruwe log (niet alleen het groene vinkje): alle 21
+afhankelijkheids-stappen (nettle t/m libgcrypt) geslaagd, gevolgd door
+`==> WebKitGTK klaar` / `==> 22-webkitgtk.sh geslaagd` / `==> Fase 5a
+(binnen chroot) volledig doorlopen` / `==> 05a (binnen chroot)
+geslaagd`. Totale jobtijd 4u18m3s — WebKitGTK's eigen `ninja -j2`-
+compile alleen al liep van 16:43 tot 20:30 (bijna 3u47m), conform de
+verwachting voor een omvangrijke codebase onder de bewuste
+RAM-veilige `-j2`-beperking.
+
+**Samenvatting van het volledige fase-5a-traject** (9 CI-iteraties,
+2026-09-26, allemaal root-cause-fixes, geen workarounds): van de
+oorspronkelijke 19-pakketten-audit bleek de echte keten 21 pakketten
+te vereisen (libgpg-error + libgcrypt ontbraken, WebKitGTK's eigen
+BLFS-paginatekst vermeldt dit niet apart) plus één herbouw (HarfBuzz,
+voor ICU-integratie die er niet was toen HarfBuzz in fase 3b werd
+gebouwd). Kleinere per-pakket-fixes: libtasn1-volgorde vóór GnuTLS,
+GnuTLS `--with-included-unistring`+`--without-p11-kit`, libsoup3
+`-D tests=false`, libsecret `-D crypto=gnutls`+`-D vapi=false`+
+`-D manpage=false`, WebKitGTK zelf `-D ENABLE_SPELLCHECK=OFF`+
+`-D USE_AVIF=OFF`+`-D USE_JPEGXL=OFF`. Elke fix is hierboven met de
+exacte foutmelding, root-cause en onderbouwing gedocumenteerd.
+
+**Eerstvolgende stap:** fase 5b (minimale WebKitGTK-kiosk-shell +
+generiek "voeg webapp toe"-mechanisme) — nog niet gestart.

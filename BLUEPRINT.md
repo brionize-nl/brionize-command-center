@@ -757,7 +757,13 @@ animaties/menu's van de tegel-manager renderen via die browser-engine) —
 dit wordt het eerstvolgende grote bouwblok, vóór ISO-verpakking/
 installer-naar-schijf/first-boot-wizard.
 
-## Fase 5a — WebKitGTK-afhankelijkheidsketen (2026-09-26)
+## Fase 5a — WebKitGTK-afhankelijkheidsketen (2026-09-26, BEWEZEN GROEN)
+**Status: voltooid en CI-bewezen** (run 36254993822, ✓, 4u18m3s,
+achtste cache-laag `lfs-webkit-complete-*` succesvol opgeslagen). Na
+9 CI-iteraties met uitsluitend root-cause-fixes (geen workarounds) —
+volledig traject gedocumenteerd in PROGRESS.md, reeks "Fase 5a: N-de
+CI-run gefaald" t/m de mijlpaal-regel "MIJLPAAL: fase 5a (WebKitGTK)
+volledig groen".
 Eerste stap van het browser/tegel-manager-bouwblok: WebKitGTK-2.48.5 zelf,
 inclusief de volledige transitieve afhankelijkheidsketen. Audit gedaan
 door de "Dependencies"-sectie van elke BLFS-pagina te volgen tot de keten
