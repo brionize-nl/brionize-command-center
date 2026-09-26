@@ -1124,3 +1124,12 @@
   eerlijk vastgelegd i.p.v. te doen alsof de syntax-check (fase 3d)
   voldoende was. Wordt vervolgd zodra de browserstap + een
   terminal-emulator er zijn.
+
+## 2026-09-26 — AUTOPILOT PAUZE (checkpoint, geen codewijzigingen)
+Brionize heeft het bouwproces bewust stopgezet op een veilig punt.
+**Bevestigd bij pauze:** repo schoon (geen uncommitted changes),
+laatste CI-run groen (36047165966, fase 1 t/m 4 volledig bewezen, alle
+zeven cache-lagen), geen lokale build-containers actief. Volledige
+"we stoppen hier"-samenvatting + eerstvolgende-stap-opties staan in
+HANDOFF.md (bijgewerkt in dezelfde commit als deze regel). Geen fase
+of fix gestart na dit punt — wacht op een nieuwe instructie.
