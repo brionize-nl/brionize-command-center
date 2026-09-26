@@ -1168,7 +1168,32 @@ lagen, ingevoegd direct na de devstack-cache-laag.
 
 Alle nieuwe scripts met `bash -n` syntax-gecontroleerd (allemaal OK) en
 de workflow-YAML met `python3 -c "import yaml; yaml.safe_load(...)"`
-gevalideerd (OK) vóór commit. Nog GEEN CI-run getriggerd voor dit werk
-— dat is de eerstvolgende stap na deze commit. BLUEPRINT.md bijgewerkt
-met de volledige audit ("Fase 5a — WebKitGTK-afhankelijkheidsketen" +
-bijbehorende Beslislog-regel).
+gevalideerd (OK) vóór commit. BLUEPRINT.md bijgewerkt met de volledige
+audit ("Fase 5a — WebKitGTK-afhankelijkheidsketen" + bijbehorende
+Beslislog-regel).
+
+## 2026-09-26 — Fase 5a: eerste CI-run gefaald, root-cause gevonden en gefixt
+Eerste CI-run voor fase 5a (36238615164) — fase 1 t/m 4 hielden stand
+(alle zeven cache-lagen cache-hit, zoals verwacht), maar 05a faalde
+meteen bij `02-gnutls.sh`:
+```
+checking for libtasn1 >= 4.9... no
+configure: error:
+  *** Libtasn1 4.9 was not found. To use the included one, use --with-included-libtasn1
+```
+Root-cause (niet gegokt, direct uit de echte log): mijn eerdere aanname
+dat GnuTLS bij een ontbrekende libtasn1 automatisch zijn eigen
+ingebakken kopie gebruikt, klopte niet — GnuTLS's configure faalt hard
+tenzij `--with-included-libtasn1` expliciet wordt meegegeven. Libtasn1
+stond in de bouwvolgorde op stap 10, ná GnuTLS (stap 02) — puur een
+volgorde-fout in de audit, geen ontbrekend pakket.
+
+Fix (root-cause, geen configure-vlag-workaround): libtasn1 verplaatst
+naar stap 02 (vóór GnuTLS), GnuTLS/glib-networking/libpsl/nghttp2/
+libsoup3/ICU/lcms2/libsecret ieder één plaats opgeschoven (03 t/m 10).
+Eén gedeelde systeem-libtasn1-build voor zowel GnuTLS als WebKitGTK's
+eigen Required-vermelding — geen dubbele/ingebakken kopie. Scripts
+hernoemd via `git mv`, `run-all.sh`'s STEPS-array bijgewerkt, foutieve
+aanname-commentaar in de betrokken scripts gecorrigeerd. Volledige
+`bash -n`-sweep opnieuw gedraaid (OK) vóór de fix-commit. Tweede
+CI-run getriggerd om dit te bewijzen.

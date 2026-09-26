@@ -764,13 +764,18 @@ door de "Dependencies"-sectie van elke BLFS-pagina te volgen tot de keten
 stopt (geen losse aannames) — zie ook `scripts/05-browser-tilemanager/`.
 
 **19 nieuwe pakketten, in bouwvolgorde:**
-Nettle-3.10.2 → GnuTLS-3.8.10 → glib-networking-2.80.1 → libpsl-0.21.5 →
-nghttp2-1.66.0 → libsoup-3.6.5 (TLS/crypto- + HTTP-keten voor libsoup3),
-ICU-77.1, Little CMS-2.17, libsecret-0.21.7, libtasn1-4.20.0,
+Nettle-3.10.2 → libtasn1-4.20.0 → GnuTLS-3.8.10 → glib-networking-2.80.1
+→ libpsl-0.21.5 → nghttp2-1.66.0 → libsoup-3.6.5 (TLS/crypto- +
+HTTP-keten voor libsoup3), ICU-77.1, Little CMS-2.17, libsecret-0.21.7,
 libwebp-1.6.0, OpenJPEG-2.5.3, Ruby-3.4.5 (leunt op libyaml, al gebouwd in
 fase 3b voor PyYAML — geen nieuw werk), unifdef-2.12, Which-2.23,
 gstreamer-1.26.5 → gst-plugins-base-1.26.5 → gst-plugins-bad-1.26.5
 (multimedia-keten), en tot slot WebKitGTK-2.48.5 zelf.
+Libtasn1 staat bewust vóór GnuTLS (niet pas bij WebKitGTK's eigen
+Required-vermelding, waar het oorspronkelijk stond): GnuTLS's eigen
+configure vereist het hard (>=4.9), geen automatische ingebakken-kopie-
+fallback — ontdekt via de eerste echte CI-run, zie PROGRESS.md
+2026-09-26 "eerste CI-run gefaald, root-cause gevonden en gefixt".
 Al aanwezig en herbruikt: Cairo, CMake, GTK-3, libgudev, Mesa, SQLite.
 GTK-3-variant gekozen (niet GTK-4) — boek is expliciet dat het één van
 beide moet zijn, matcht onze bestaande XFCE/GTK3-desktop.
