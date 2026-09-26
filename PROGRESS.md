@@ -1248,3 +1248,22 @@ trousers/TPM, ZLIB, LIBBROTLI, LIBZSTD) bevestigd non-fataal
 --with-vlag niet is meegegeven — alleen een WARNING, geen
 configure:error). Dit was daarmee de laatste verborgen gnutls-
 afhankelijkheid. Vierde CI-run getriggerd.
+
+## 2026-09-26 — Fase 5a: vierde CI-run gefaald (libsoup3-testsuite/p11-kit-nasleep), gefixt
+Vierde CI-run (36240268942) bevestigde de volledige gnutls-fix
+(`03-gnutls.sh geslaagd`) en kwam drie stappen verder
+(glib-networking, libpsl, nghttp2 alle drie geslaagd), maar faalde in
+`07-libsoup3.sh` bij het linken van libsoup3's EIGEN testsuite:
+```
+/usr/bin/ld: ssl-test.c:(.text.startup+0x3d): undefined reference to `gnutls_pkcs11_init'
+/usr/bin/ld: ssl-test.c:(.text.startup+0x4f): undefined reference to `gnutls_pkcs11_add_provider'
+```
+Root-cause: rechtstreeks gevolg van onze eigen `--without-p11-kit`-
+keuze bij GnuTLS. libsoup3's meson-optie `pkcs11_tests` staat op
+'auto' en detecteert GnuTLS als aanwezig zonder te checken of het
+mét PKCS11-support gebouwd is. Wij draaien libsoup3's testsuite hier
+sowieso niet (pure WebKitGTK-afhankelijkheid) — fix: `-D tests=false`
+toegevoegd aan libsoup3's meson-setup, verifieerd tegen het echte
+`meson_options.txt` uit de tarball (niet gegokt). De daadwerkelijke
+libsoup3-library-functionaliteit blijft ongewijzigd; alleen de
+unit-tests worden niet meer gecompileerd. Vijfde CI-run getriggerd.
