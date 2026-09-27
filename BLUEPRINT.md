@@ -776,7 +776,13 @@ animaties/menu's van de tegel-manager renderen via die browser-engine) —
 dit wordt het eerstvolgende grote bouwblok, vóór ISO-verpakking/
 installer-naar-schijf/first-boot-wizard.
 
-## Fase 5b — kiosk-shell + generiek webapp-mechanisme (2026-09-26)
+## Fase 5b — kiosk-shell + generiek webapp-mechanisme (2026-09-26/27, BEWEZEN GROEN)
+**Status: voltooid en CI-bewezen** (run 36290885141, ✓, 12m4s — na een
+eerste ronde met een echte compile-fout (`webkit_web_view_new()` geeft
+`GtkWidget*`, niet `WebKitWebView*` — gecorrigeerd) en een CI-
+cache-eviction-incident dat een structurele workflow-fix opleverde
+("Laatste-cache-laag vooraf checken", zie PROGRESS.md 2026-09-26/27
+voor de volledige toedracht van beide).
 Eerste stukje **eigen software** in dit project (geen BLFS-pakket).
 Twee onderdelen, beide onder `scripts/05-browser-tilemanager/`:
 

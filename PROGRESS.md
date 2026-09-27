@@ -1572,3 +1572,31 @@ harde fout, niet alleen een waarschuwing (recent GCC-gedrag, ook zonder
 `-Werror`). Cast teruggezet, met een commentaarregel die de echte
 bron van de fout vastlegt. Geen andere `error:`-regels in dezelfde
 compile — dit was de enige fout.
+
+## 2026-09-27 — MIJLPAAL: fase 5b (kiosk-shell) volledig groen + snelpad-fix bevestigd
+CI-run 36290885141 — ✓ volledig geslaagd in **12m4s** (tegenover de
+~4-5u van de twee voorgaande runs). Reële bewijzen: alle 8 eerdere
+lagen (bootstrap t/m webkit) toonden `✓` op hun restore/bouwen-stappen
+maar `-` (overgeslagen) op hun archief/opslaan-stappen — exact het
+verwachte gedrag van een schone cache-hit-keten, NIET het snelpad zelf
+(final-tier-check was hier een miss, want kiosk-shell's hash was net
+gewijzigd door de .c-fix — de 8 eerdere lagen sloegen dus op eigen
+kracht hun rebuild over, wat al genoeg was om dit razendsnel te maken).
+`01-build-kiosk-shell.sh geslaagd` + `05b (binnen chroot) geslaagd`
+bevestigen de daadwerkelijke compilatie. Kiosk-shell-complete-cache
+succesvol opgeslagen (9e laag).
+
+Cache-stand ná deze run gecontroleerd: bootstrap/ch8/xorg/gtk3/
+xfce-core zijn ALWEER geëvicteerd (totaal ~9,77GB met de 4 meest
+recent-gebruikte lagen: kiosk-shell/webkit/devstack/xfce-extras) — het
+10GB-opslagprobleem blijft dus een reëel, terugkerend, structureel
+punt (zie hierboven), maar de snelpad-fix maakt dit nu VEEL minder
+kostbaar: zolang de NIEUWSTE laag zelf geldig blijft, doet de afwezigheid
+van de tussenliggende lagen er niet meer toe (ze worden dan simpelweg
+niet meer gecontroleerd). Alleen bij een wijziging die de nieuwste
+laag's hash ZELF verandert én een vroege tussenlaag inmiddels ontbreekt,
+is een deel-herbouw nog nodig — een acceptabel, veel kleiner risico dan
+voorheen.
+
+**Fase 5a + 5b samen volledig bewezen.** Eerstvolgende stap: fase 5c
+(tegel-manager-kern) — nog niet gestart.
