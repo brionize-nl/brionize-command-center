@@ -1527,3 +1527,48 @@ eigen risico's, die niet halverwege een lopende bouw-iteratie moet
 gebeuren. Voor nu: doorgegaan met de bestaande structuur + reactieve
 opruiming, en deze afweging hier vastgelegd voor een bewuste
 vervolgstap.
+
+**Vervolg (zelfde dag):** dezelfde run bevestigde een TWEEDE, los
+probleem: de workflow heeft geen "sla eerdere lagen over als de
+NIEUWSTE laag al cache-hit is"-snelpad — elke laag-stap checkt alleen
+zijn eigen key, onafhankelijk van wat verderop gebeurt. Dat betekende
+dat de net herbouwde ch8/xorg-cache (na de opruiming hierboven)
+sowieso voor niets zou zijn geweest zodra een latere laag (bv.
+webkit-complete) alsnog cache-hit gaf — exact het scenario dat toen
+ook gebeurde (~2,5u onnodige WebKitGTK-herbouw omdat `run-all.sh`
+gewijzigd was, wat de webkit-complete-hash meesleepte).
+
+Root-cause fix doorgevoerd (mechanisch, laag risico — voegt alleen
+skip-guards toe aan reeds werkende, ongewijzigde logica): een nieuwe
+stap "Laatste-cache-laag vooraf checken (snelle happy-path)" vooraan
+in de job, die met `actions/cache/restore@v4`'s eigen `lookup-only:
+true`-optie (geverifieerd tegen de echte `action.yml` van
+`actions/cache`, niet gegokt) ALLEEN controleert of de nieuwste laag
+(momenteel kiosk-shell-complete) al bestaat, zonder 'm te downloaden.
+Alle 8 eerdere lagen (bootstrap t/m webkit, 32 stappen in totaal: elke
+laag se restore/bouwen/archief/opslaan) kregen
+`if: steps.lfs-final-tier-check.outputs.cache-hit != 'true'` — bij een
+snelpad-hit worden ze volledig overgeslagen. De kiosk-shell-tier zelf
+blijft ongewijzigd (altijd zijn eigen, normale logica). Dit lost NIET
+het 10GB-opslagprobleem zelf op (dat blijft het bovenstaande
+structurele beslispunt), maar voorkomt wél de gerichte verspilling van
+"tussenlagen herbouwen voor niets terwijl de uiteindelijk benodigde
+laag al klaarstond" — precies wat er in deze twee opeenvolgende runs
+gebeurde.
+
+**Los daarvan: de echte fase-5b-compile-fout gevonden en gefixt.**
+Ná de hele cache-omweg kwam de run tot slot bij de daadwerkelijke
+`command-center-kiosk.c`-compilatie, en die faalde ECHT (niet
+CI-infrastructuur, maar een echte code-fout van mij):
+```
+command-center-kiosk.c:90:30: error: initialization of 'WebKitWebView *'
+from incompatible pointer type 'GtkWidget *' [-Wincompatible-pointer-types]
+```
+Root-cause: `webkit_web_view_new()` geeft `GtkWidget*` terug, niet
+`WebKitWebView*` — mijn eigen eerdere "opschoning" (de expliciete
+`WEBKIT_WEB_VIEW()`-cast weghalen omdat die "overbodig" leek, zonder
+lokaal te kunnen compileren) was fout. GCC 15 behandelt dit als een
+harde fout, niet alleen een waarschuwing (recent GCC-gedrag, ook zonder
+`-Werror`). Cast teruggezet, met een commentaarregel die de echte
+bron van de fout vastlegt. Geen andere `error:`-regels in dezelfde
+compile — dit was de enige fout.

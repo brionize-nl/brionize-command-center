@@ -87,7 +87,11 @@ on_activate(GtkApplication *app, gpointer user_data)
     gtk_window_set_title(GTK_WINDOW(window), title);
     gtk_window_set_default_size(GTK_WINDOW(window), 1280, 800);
 
-    WebKitWebView *webview = webkit_web_view_new();
+    /* webkit_web_view_new() geeft GtkWidget* terug (niet WebKitWebView*
+     * — bevestigd via de echte compiler-fout in de eerste CI-run,
+     * 2026-09-26: "initialization ... from incompatible pointer type
+     * 'GtkWidget *'"), vandaar de expliciete WEBKIT_WEB_VIEW()-cast. */
+    WebKitWebView *webview = WEBKIT_WEB_VIEW(webkit_web_view_new());
     gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(webview));
     webkit_web_view_load_uri(webview, url);
 
